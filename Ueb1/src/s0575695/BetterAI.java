@@ -9,13 +9,14 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import lenz.htw.ai4g.ai.AI;
 import lenz.htw.ai4g.ai.DivingAction;
 import lenz.htw.ai4g.ai.Info;
 import lenz.htw.ai4g.ai.PlayerAction;
 
-public class MyAI extends AI {
+public class BetterAI extends AI {
 
 	final int AVOID_TIME = 120;
 	int currPearlIndex;
@@ -25,7 +26,7 @@ public class MyAI extends AI {
 	Point center;
 	Point currPearl;
 	ArrayList<Point> remainingPearls;
-	public MyAI(Info info) {
+	public BetterAI(Info info) {
 		super(info);
 		currPearlIndex = 0;
 		currScore = 0;
@@ -37,7 +38,7 @@ public class MyAI extends AI {
 	
 	@Override
 	public String getName() {
-		return "Leonard Valentin";
+		return "better AI";
 	}
 
 	@Override
@@ -61,6 +62,7 @@ public class MyAI extends AI {
 			currPearl = getClosestPoint(position);
 		}
 		Point direction = seek(currPearl);
+		System.out.println(rayCast(position, direction.getX() / getLen(direction), direction.getY() / getLen(direction)));
 		float angle = (float) Math.atan2(direction.y, direction.x);
 		if(avoidTime > 0) {
 			direction = flee(center);
@@ -104,5 +106,13 @@ public class MyAI extends AI {
 			if(playerPos.distance(pearl) < playerPos.distance(ClosestPearl))ClosestPearl = pearl;
 		}
 		return ClosestPearl;
+	}
+	private int rayCast(Point origin, double directionX, double directionY) {
+		for (int i = 0; i < 500; i++) {
+			for(Path2D path : info.getScene().getObstacles()) {
+				if(path.contains(origin.x + i * directionX, origin.y - i * directionY )) return i;
+			}
+		}
+		return 5;
 	}
 }
