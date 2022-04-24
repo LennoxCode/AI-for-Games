@@ -9,7 +9,12 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Queue;
 
 import lenz.htw.ai4g.ai.AI;
 import lenz.htw.ai4g.ai.DivingAction;
@@ -27,6 +32,9 @@ public class BetterAI extends AI {
 	Point currPearl;
 	ArrayList<Point> remainingPearls;
 	Vector currDirection;
+	float currentAngle;
+	int passedTime =0;
+	Point[][] nodes;
 	public BetterAI(Info info) {
 		super(info);
 		currPearlIndex = 0;
@@ -35,6 +43,13 @@ public class BetterAI extends AI {
 		for(Point point : info.getScene().getPearl())remainingPearls.add(point);
 		currPearl = remainingPearls.get(0);
 		currDirection = new Vector(0, 0); 
+		
+		for (int x = 0; x < info.getScene().getWidth(); x +=20) {
+			for (int y = 0; y < info.getScene().getHeight(); y+=20) {
+				
+			}
+		}
+		
 	}
 	
 	@Override
@@ -62,18 +77,20 @@ public class BetterAI extends AI {
 			currScore = info.getScore();
 			currPearl = getClosestPoint(position);
 		}
+		passedTime++;
+		if(passedTime % 5 != 0) {
+			return new DivingAction(info.getMaxAcceleration(), -currentAngle);
+		}
 		
 		Vector direction = seek(currPearl);
 		direction.normalize();
-		currDirection.add(direction);
-		currDirection.normalize();
 		//Point seekForce = seek(currPearl);
 		//direction = new Point((int) (direction.getX() + seekForce.getX() / getLen(seekForce)),(int)  (direction.getY() + seekForce.getY() / getLen(seekForce)));
 		//System.out.println(rayCast(position, direction.getX() / getLen(direction), direction.getY() / getLen(direction)));
 		if(position.distance(currPearl) > 40) {
 			for(Path2D path : info.getScene().getObstacles()) {
-				if(path.contains(info.getX() + currDirection.x * 40,
-					info.getY() + currDirection.y * 40)) {
+				if(path.contains(info.getX() + direction.x * 40,
+					info.getY() + direction.y * 40)) {
 					
 					Rectangle bounds = path.getBounds();
 					
@@ -81,15 +98,16 @@ public class BetterAI extends AI {
 					
 					Vector avoidanceForce = new Vector(direction.x - center.x, direction.y - center.y);
 					System.out.println(avoidanceForce.normalize());
-					currDirection.add(avoidanceForce.normalize()).normalize();
+					direction.add(avoidanceForce.normalize()).normalize();
 				
 				}
 			}
 		}
 	
-
 		
-		float angle = (float) Math.atan2(currDirection.y, currDirection.x);
+		
+		float angle = (float) Math.atan2(direction.y, direction.x);
+		currentAngle = angle;
 		return new DivingAction(info.getMaxAcceleration(), -angle);
 		
 		
@@ -127,6 +145,41 @@ public class BetterAI extends AI {
 		return 5;
 	}
 	
+	private List<Point> constructPath(Point from, Point to) {
+		Queue<Point> toLookat = new PriorityQueue<>();
+		HashMap<Point, Point> lookedAt = new HashMap<>();
+		toLookat.add(from);
+		while(toLookat.size() > 0) {
+			Point current = toLookat.remove();
+			List<Point> neighbors = getNeighbors(current);
+			for(Point neighbor : neighbors) {
+				if(!lookedAt.containsKey(neighbor) && !toLookat.contains(neighbor)) toLookat.add(neighbor);
+			
+			}
+			
+		}
+		
+		
+		
+		return null;
+	}
+	private List<Point> getNeighbors(Point from){
+		ArrayList<Point> reti = new ArrayList<>();
+		for (int i = -1; i < 2; i+=2) {
+			for (int f = -1; f < 2; f+=2) {
+				Point point = new Point(from.x + 5 * i, from.y * f);
+				if(!isPointInObstacles(point))reti.add(point);
+			}
+		}
+		return reti;
+	}
+	private boolean isPointInObstacles(Point point) {
+		
+		for(Path2D path : info.getScene().getObstacles()) {
+			if(path.contains(point))return true;
+		}
+		return false;
+	}
 	private class Vector{
 		public float x;
 		public float y;
