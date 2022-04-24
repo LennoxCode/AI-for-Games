@@ -37,7 +37,7 @@ public class MyAI extends AI {
 	
 	@Override
 	public String getName() {
-		return "Leonard Valentin";
+		return "Leonard";
 	}
 
 	@Override

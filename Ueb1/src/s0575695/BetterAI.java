@@ -26,6 +26,7 @@ public class BetterAI extends AI {
 	Point center;
 	Point currPearl;
 	ArrayList<Point> remainingPearls;
+	Vector currDirection;
 	public BetterAI(Info info) {
 		super(info);
 		currPearlIndex = 0;
@@ -33,7 +34,7 @@ public class BetterAI extends AI {
 		remainingPearls = new ArrayList<>();
 		for(Point point : info.getScene().getPearl())remainingPearls.add(point);
 		currPearl = remainingPearls.get(0);
-		
+		currDirection = new Vector(0, 0); 
 	}
 	
 	@Override
@@ -61,34 +62,40 @@ public class BetterAI extends AI {
 			currScore = info.getScore();
 			currPearl = getClosestPoint(position);
 		}
-		Point direction = seek(currPearl);
-		System.out.println(rayCast(position, direction.getX() / getLen(direction), direction.getY() / getLen(direction)));
-		float angle = (float) Math.atan2(direction.y, direction.x);
-		if(avoidTime > 0) {
-			direction = flee(center);
-			angle = (float) Math.atan2(direction.y, direction.x);
-			 
-			avoidTime--;
-			return new DivingAction(info.getMaxAcceleration(), angle);
-			
-		}
-		for(Path2D path : info.getScene().getObstacles()) {
-			if(path.contains(info.getX() + direction.getX() * 20/ getLen(direction) ,
-					info.getY() - direction.y * 20 / getLen(direction))) {
-				avoidTime = AVOID_TIME;
-				Rectangle bounds = path.getBounds();
-				Point center = new Point(bounds.x + bounds.width / 2, bounds.y + bounds.height /2);
+		
+		Vector direction = seek(currPearl);
+		direction.normalize();
+		currDirection.add(direction);
+		currDirection.normalize();
+		//Point seekForce = seek(currPearl);
+		//direction = new Point((int) (direction.getX() + seekForce.getX() / getLen(seekForce)),(int)  (direction.getY() + seekForce.getY() / getLen(seekForce)));
+		//System.out.println(rayCast(position, direction.getX() / getLen(direction), direction.getY() / getLen(direction)));
+		if(position.distance(currPearl) > 40) {
+			for(Path2D path : info.getScene().getObstacles()) {
+				if(path.contains(info.getX() + currDirection.x * 40,
+					info.getY() + currDirection.y * 40)) {
+					
+					Rectangle bounds = path.getBounds();
+					
+					Point center = new Point(bounds.x + bounds.width / 2, bounds.y + bounds.height /2);
+					
+					Vector avoidanceForce = new Vector(direction.x - center.x, direction.y - center.y);
+					System.out.println(avoidanceForce.normalize());
+					currDirection.add(avoidanceForce.normalize()).normalize();
 				
-				this.center =  new Point((position.x + center.x) / 2, (position.y + center.y) / 2);
-			
+				}
 			}
 		}
-		return new DivingAction(info.getMaxAcceleration(), angle);
+	
+
+		
+		float angle = (float) Math.atan2(currDirection.y, currDirection.x);
+		return new DivingAction(info.getMaxAcceleration(), -angle);
 		
 		
 	}
-	private Point seek(Point target) {
-		return new Point((int) (target.x - info.getX()), (int) -(target.y - info.getY()));
+	private Vector seek(Point target) {
+		return new Vector(target.x - info.getX(), target.y - info.getY());
 	}
 	private Point flee(Point target) {
 		return new Point((int) -(target.x - info.getX()), (int) (target.y - info.getY()));
@@ -107,6 +114,10 @@ public class BetterAI extends AI {
 		}
 		return ClosestPearl;
 	}
+	private Point normalize(Point toNormalize) {
+		float len = getLen(toNormalize);
+		return new Point((int)( toNormalize.getX() / len), (int) (toNormalize.getY() / len));
+	}
 	private int rayCast(Point origin, double directionX, double directionY) {
 		for (int i = 0; i < 500; i++) {
 			for(Path2D path : info.getScene().getObstacles()) {
@@ -114,5 +125,43 @@ public class BetterAI extends AI {
 			}
 		}
 		return 5;
+	}
+	
+	private class Vector{
+		public float x;
+		public float y;
+		@Override
+		public String toString() {
+			return "Vector [x=" + x + ", y=" + y + "]";
+		}
+		public Vector(float x, float y) {
+			this.x = x;
+			this.y = y;
+		}
+		public Vector add(Vector toAdd) {
+			this.x += toAdd.x;
+			this.y += toAdd.y;
+			return this;
+		}
+		public float getLen() {
+			return (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+		}
+		public double getX() {
+			return x;
+		}
+		public double getY() {
+			return y;
+		}
+		public Vector normalize() {
+			float len = getLen();
+			x /= len;
+			y /= len;
+			return this;
+		}
+		public Vector scale(float scalar) {
+			return new Vector(x* scalar,y * scalar);
+		}
+		
+		
 	}
 }
