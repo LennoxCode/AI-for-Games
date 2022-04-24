@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -34,7 +35,8 @@ public class BetterAI extends AI {
 	Vector currDirection;
 	float currentAngle;
 	int passedTime =0;
-	Point[][] nodes;
+	List<Point> currPath;
+	Point currTarget;
 	public BetterAI(Info info) {
 		super(info);
 		currPearlIndex = 0;
@@ -43,12 +45,8 @@ public class BetterAI extends AI {
 		for(Point point : info.getScene().getPearl())remainingPearls.add(point);
 		currPearl = remainingPearls.get(0);
 		currDirection = new Vector(0, 0); 
-		
-		for (int x = 0; x < info.getScene().getWidth(); x +=20) {
-			for (int y = 0; y < info.getScene().getHeight(); y+=20) {
-				
-			}
-		}
+		currPath = constructPath( new Point((int)info.getX(),(int) info.getY()), currPearl);
+		currTarget = currPath.get(currPath.size()-1);
 		
 	}
 	
@@ -76,22 +74,31 @@ public class BetterAI extends AI {
 			removePearl(position);
 			currScore = info.getScore();
 			currPearl = getClosestPoint(position);
+			currPath = constructPath(position, currPearl);
 		}
-		passedTime++;
-		if(passedTime % 5 != 0) {
-			return new DivingAction(info.getMaxAcceleration(), -currentAngle);
+		if(position.distance(currTarget) < 2) {
+			if(currPath.size() != 1) {
+				currPath.remove(currPath.size() - 1);
+				currTarget = currPath.get(currPath.size()-1);
+			}else {
+				currTarget = currPearl;
+			}
 		}
+		//passedTime++;
+		//if(passedTime % 5 != 0) {
+		//	return new DivingAction(info.getMaxAcceleration(), -currentAngle);
+		//}
 		
-		Vector direction = seek(currPearl);
+		Vector direction = seek(currTarget);
 		direction.normalize();
 		//Point seekForce = seek(currPearl);
 		//direction = new Point((int) (direction.getX() + seekForce.getX() / getLen(seekForce)),(int)  (direction.getY() + seekForce.getY() / getLen(seekForce)));
 		//System.out.println(rayCast(position, direction.getX() / getLen(direction), direction.getY() / getLen(direction)));
-		if(position.distance(currPearl) > 40) {
+		if(position.distance(currPearl) > 20) {
 			for(Path2D path : info.getScene().getObstacles()) {
-				if(path.contains(info.getX() + direction.x * 40,
-					info.getY() + direction.y * 40)) {
-					
+				//if(path.contains(info.getX() + direction.x * 20,
+					//info.getY() + direction.y * 20)) {
+					if(false) {
 					Rectangle bounds = path.getBounds();
 					
 					Point center = new Point(bounds.x + bounds.width / 2, bounds.y + bounds.height /2);
@@ -146,14 +153,31 @@ public class BetterAI extends AI {
 	}
 	
 	private List<Point> constructPath(Point from, Point to) {
-		Queue<Point> toLookat = new PriorityQueue<>();
-		HashMap<Point, Point> lookedAt = new HashMap<>();
-		toLookat.add(from);
+		Queue<Point> toLookat = new LinkedList<>();
+		HashMap<Point, Point> cameFrom = new HashMap<>();
+		toLookat.offer(from);
+		cameFrom.put(from, null);
 		while(toLookat.size() > 0) {
-			Point current = toLookat.remove();
+			Point current = toLookat.poll();
+			if(current.distance(to) < 15) { 
+				List<Point> path = new ArrayList<>();
+				Point point = current;
+				path.add(point);
+				while(cameFrom.get(point) != null) {
+					point = cameFrom.get(point);
+					path.add(point);
+				}
+				System.out.println(cameFrom.size());
+				System.out.println(path.size());
+				return path;
+				}
 			List<Point> neighbors = getNeighbors(current);
 			for(Point neighbor : neighbors) {
-				if(!lookedAt.containsKey(neighbor) && !toLookat.contains(neighbor)) toLookat.add(neighbor);
+				if(!toLookat.contains(neighbor) && !cameFrom.containsKey(neighbor)) {
+					toLookat.add(neighbor);
+					cameFrom.put(neighbor, current);
+					
+				}
 			
 			}
 			
@@ -164,13 +188,11 @@ public class BetterAI extends AI {
 		return null;
 	}
 	private List<Point> getNeighbors(Point from){
+		final int GRID_SIZE = 20;
 		ArrayList<Point> reti = new ArrayList<>();
-		for (int i = -1; i < 2; i+=2) {
-			for (int f = -1; f < 2; f+=2) {
-				Point point = new Point(from.x + 5 * i, from.y * f);
-				if(!isPointInObstacles(point))reti.add(point);
-			}
-		}
+		Point[] neighbors = {new Point(from.x + GRID_SIZE, from.y), new Point(from.x - GRID_SIZE, from.y),
+				new Point(from.x , from.y + GRID_SIZE), new Point(from.x, from.y - GRID_SIZE)};
+		for(Point point : neighbors)if(!isPointInObstacles(point))reti.add(point);
 		return reti;
 	}
 	private boolean isPointInObstacles(Point point) {
