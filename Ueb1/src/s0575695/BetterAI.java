@@ -48,12 +48,13 @@ public class BetterAI extends AI {
 		currDirection = new Vector(0, 0); 
 		currPath = constructPath( new Point((int)info.getX(),(int) info.getY()), currPearl);
 		currTarget = currPath.get(currPath.size()-1);
+		enlistForTournament(575695);
 		
 	}
 	
 	@Override
 	public String getName() {
-		return "better AI";
+		return "Leonard";
 	}
 
 	@Override
@@ -90,17 +91,9 @@ public class BetterAI extends AI {
 			//float angle = (float) Math.atan2(direction.y, direction.x);
 			//return new DivingAction(info.getMaxAcceleration(), -angle);
 		//}
-		///passedTime++;
-		//if(passedTime % 5 != 0) {
-		//	return new DivingAction(info.getMaxAcceleration(), -currentAngle);
-		//}
-		
 		Vector direction = seek(currTarget);
 		direction.normalize();
 		
-		//Point seekForce = seek(currPearl);
-		//direction = new Point((int) (direction.getX() + seekForce.getX() / getLen(seekForce)),(int)  (direction.getY() + seekForce.getY() / getLen(seekForce)));
-		//System.out.println(rayCast(position, direction.getX() / getLen(direction), direction.getY() / getLen(direction)));
 		if(position.distance(currPearl) > 20) {
 			for(Path2D path : info.getScene().getObstacles()) {
 				//if(path.contains(info.getX() + direction.x * 20,
