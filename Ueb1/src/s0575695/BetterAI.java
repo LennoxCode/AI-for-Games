@@ -3,6 +3,7 @@ package s0575695;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
@@ -43,7 +44,7 @@ public class BetterAI extends AI {
 		currScore = 0;
 		remainingPearls = new ArrayList<>();
 		for(Point point : info.getScene().getPearl())remainingPearls.add(point);
-		currPearl = remainingPearls.get(0);
+		currPearl = getClosestPoint(new Point(0, info.getScene().getHeight() /2));
 		currDirection = new Vector(0, 0); 
 		currPath = constructPath( new Point((int)info.getX(),(int) info.getY()), currPearl);
 		currTarget = currPath.get(currPath.size()-1);
@@ -84,13 +85,19 @@ public class BetterAI extends AI {
 				currTarget = currPearl;
 			}
 		}
-		//passedTime++;
+		//if(rayCast2(position, seek(currPearl).normalize(), currPearl)) {
+			//Vector direction = seek(currPearl);
+			//float angle = (float) Math.atan2(direction.y, direction.x);
+			//return new DivingAction(info.getMaxAcceleration(), -angle);
+		//}
+		///passedTime++;
 		//if(passedTime % 5 != 0) {
 		//	return new DivingAction(info.getMaxAcceleration(), -currentAngle);
 		//}
 		
 		Vector direction = seek(currTarget);
 		direction.normalize();
+		
 		//Point seekForce = seek(currPearl);
 		//direction = new Point((int) (direction.getX() + seekForce.getX() / getLen(seekForce)),(int)  (direction.getY() + seekForce.getY() / getLen(seekForce)));
 		//System.out.println(rayCast(position, direction.getX() / getLen(direction), direction.getY() / getLen(direction)));
@@ -146,10 +153,32 @@ public class BetterAI extends AI {
 	private int rayCast(Point origin, double directionX, double directionY) {
 		for (int i = 0; i < 500; i++) {
 			for(Path2D path : info.getScene().getObstacles()) {
-				if(path.contains(origin.x + i * directionX, origin.y - i * directionY )) return i;
+				if(path.contains(origin.x + i * directionX, origin.y + i * directionY )) return i;
 			}
 		}
 		return 5;
+	}
+	private boolean rayCast2(Point origin, Vector direction, Point target) {
+		Line2D pathToTarget = new Line2D.Double(origin.x, origin.y, target.x, target.y);
+		
+		
+	
+		for(Path2D path : info.getScene().getObstacles()) {
+			Point2D lastPoint = null;
+			for(PathIterator pi = path.getPathIterator(null); !pi.isDone(); pi.next()) {
+				double[] coordinates = new double[6];
+                pi.currentSegment(coordinates);
+                if(lastPoint == null) {
+                    lastPoint = new Point((int) coordinates[0], (int) coordinates[1]);
+                }
+                Line2D segment = new Line2D.Double(lastPoint.getX(), lastPoint. getY(), coordinates[0],coordinates[1]);
+                lastPoint.setLocation((int) coordinates[0], (int) coordinates[1]);
+                if(coordinates[0] != 0 && coordinates[1] != 0 && pathToTarget.intersectsLine(segment)) {
+                	return false;
+                }
+		}
+		}
+		return true;
 	}
 	
 	private List<Point> constructPath(Point from, Point to) {
@@ -167,8 +196,6 @@ public class BetterAI extends AI {
 					point = cameFrom.get(point);
 					path.add(point);
 				}
-				System.out.println(cameFrom.size());
-				System.out.println(path.size());
 				return path;
 				}
 			List<Point> neighbors = getNeighbors(current);
