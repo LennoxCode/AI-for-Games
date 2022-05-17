@@ -3,6 +3,7 @@ package s0575695;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
@@ -39,6 +40,7 @@ public class BetterAI extends AI {
 	float currentAngle;
 	int passedTime =0;
 	List<Point> currPath;
+	ArrayList<Point2D> reflexCorners;
 	Point currTarget;
 	public BetterAI(Info info) {
 		super(info);
@@ -53,7 +55,9 @@ public class BetterAI extends AI {
 		currPath = constructPath( new Point((int)info.getX(),(int) info.getY()), currPearl);
 		currTarget = currPath.get(currPath.size()-1);
 		enlistForTournament(575695);
-		
+		Point2D test = reflexCorners.remove(0);
+		GraphNode moin = new GraphNode(test, reflexCorners);
+		System.out.println(moin.edges.size());
 	}
 	
 	@Override
@@ -201,6 +205,7 @@ public class BetterAI extends AI {
 		}
 		System.out.println(amountOfPoints);
 		System.out.println(reflexCorners.size());
+		this.reflexCorners = reflexCorners;
 	}
 	private boolean isReflexCorner(Point2D toTest, Point2D prev, Point2D next) {
 		Vector aTob = new Vector((float) (toTest.getX() - prev.getX()), (float) (toTest.getY() - prev.getY()));
@@ -295,5 +300,39 @@ public class BetterAI extends AI {
 		}
 		
 	}
-	
+	private class GraphNode {
+		public Point point;
+		public ArrayList<Point2D> edges;
+		
+		public GraphNode(Point2D point, ArrayList<Point2D> points) {
+			edges = new ArrayList<>();
+			Area[] obstacleAreas = new Area[info.getScene().getObstacles().length];
+			int xd = 0;
+			for(Path2D path : info.getScene().getObstacles()) {
+				//Area test = new Are
+				obstacleAreas[xd] = new Area(path.createTransformedShape(new AffineTransform()));
+				xd++;
+						
+			}
+			System.out.println(points.size());
+			for(Point2D currPoint : points) {
+				Line2D line = new Line2D.Double(point, currPoint);
+				
+				boolean isClear = true;
+				for(Area obstacle : obstacleAreas) {
+					Rectangle2D rect = new Rectangle2D.Float(333, 50, 1, 1);
+					Area test = new Area(line);
+					test.intersect(obstacle);
+					if(!test.isEmpty()) {
+						isClear = false;
+						break;
+					}
+				}
+				if(isClear) edges.add(currPoint);
+				
+				
+				
+			}
+		}
+	}
 }
