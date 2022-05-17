@@ -320,8 +320,11 @@ public class BetterAI extends AI {
 				
 				boolean isClear = true;
 				for(Area obstacle : obstacleAreas) {
-					Rectangle2D rect = new Rectangle2D.Float(333, 50, 1, 1);
-					Area test = new Area(line);
+					Path2D path = new Path2D.Double();
+					path.moveTo(point.getX(), point.getY());
+					path.lineTo(currPoint.getX(), currPoint.getY());
+					path.closePath();
+					Area test = new Area(path);
 					test.intersect(obstacle);
 					if(!test.isEmpty()) {
 						isClear = false;
