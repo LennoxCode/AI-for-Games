@@ -45,6 +45,7 @@ public class BetterAI extends AI {
 		currPearlIndex = 0;
 		currScore = 0;
 		constructGraph();
+		System.out.println("moin");
 		remainingPearls = new ArrayList<>();
 		for(Point point : info.getScene().getPearl())remainingPearls.add(point);
 		currPearl = getClosestPoint(new Point(0, info.getScene().getHeight() /2));
@@ -181,6 +182,7 @@ public class BetterAI extends AI {
 		Area[] areas = new Area[obstacles.length];
 		ArrayList<Point2D> reflexCorners = new ArrayList<>();
 		for(int i = 0; i < obstacles.length; i++)areas[i] = new Area(obstacles[i]);
+		int amountOfPoints = 0;
 		for(Path2D obstacle : obstacles) {
 			PathIterator it = obstacle.getPathIterator(null);
 			Point2D prevPoint = new Point2D.Double(0, 0);
@@ -194,9 +196,11 @@ public class BetterAI extends AI {
 				if(isReflexCorner(currPoint, prevPoint, nextPoint)) reflexCorners.add(currPoint);
 				prevPoint = currPoint;
 				currPoint = nextPoint;
-				
+				amountOfPoints++;
 			}
 		}
+		System.out.println(amountOfPoints);
+		System.out.println(reflexCorners.size());
 	}
 	private boolean isReflexCorner(Point2D toTest, Point2D prev, Point2D next) {
 		Vector aTob = new Vector((float) (toTest.getX() - prev.getX()), (float) (toTest.getY() - prev.getY()));
@@ -287,8 +291,9 @@ public class BetterAI extends AI {
 			return new Vector(x* scalar,y * scalar);
 		}
 		public float dotProdut(Vector toMulitply) {
-			return 0.6f;
+			return this.x * toMulitply.x + this.y * toMulitply.y; 
 		}
 		
 	}
+	
 }

@@ -6,6 +6,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="C:/Users/s0575695/AI-for-Games/Ueb2/ai.jar"/>
+	<classpathentry kind="lib" path="ai.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
