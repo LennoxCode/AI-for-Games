@@ -272,6 +272,10 @@ public class BetterAI extends AI {
 			this.x = x;
 			this.y = y;
 		}
+		public Vector(double x, double y) {
+			this.x = (float)x;
+			this.y = (float)y;
+		}
 		public Vector add(Vector toAdd) {
 			this.x += toAdd.x;
 			this.y += toAdd.y;
@@ -300,38 +304,37 @@ public class BetterAI extends AI {
 		}
 		
 	}
+	private class Graph {
+		private ArrayList<GraphNode> nodes;
+		public Graph(ArrayList<Point2D> points){
+			for (int i = 0; i < points.size() - 1; i++) {
+				Point2D curr = points.remove(0);
+				nodes.add(new GraphNode(curr, points));
+			}
+	
+		}
+	}
 	private class GraphNode {
 		public Point point;
 		public ArrayList<Point2D> edges;
 		
 		public GraphNode(Point2D point, ArrayList<Point2D> points) {
 			edges = new ArrayList<>();
-			Area[] obstacleAreas = new Area[info.getScene().getObstacles().length];
-			int xd = 0;
-			for(Path2D path : info.getScene().getObstacles()) {
-				//Area test = new Are
-				obstacleAreas[xd] = new Area(path.createTransformedShape(new AffineTransform()));
-				xd++;
-						
-			}
-			System.out.println(points.size());
-			for(Point2D currPoint : points) {
-				Line2D line = new Line2D.Double(point, currPoint);
-				
-				boolean isClear = true;
-				for(Area obstacle : obstacleAreas) {
-					Path2D path = new Path2D.Double();
-					path.moveTo(point.getX(), point.getY());
-					path.lineTo(currPoint.getX(), currPoint.getY());
-					path.closePath();
-					Area test = new Area(path);
-					test.intersect(obstacle);
-					if(!test.isEmpty()) {
-						isClear = false;
-						break;
-					}
-				}
-				if(isClear) edges.add(currPoint);
+			Area obstacleArea = new Area();// new Area[info.getScene().getObstacles().length];
+			for(Path2D path : info.getScene().getObstacles()) 
+				obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
+			
+			for(Point2D currPoint : points) {	
+				Vector normal = new Vector(-(currPoint.getY() - point.getY()),currPoint.getX() - point.getX()).normalize();
+				Path2D path = new Path2D.Double();
+				path.moveTo(point.getX(), point.getY());
+				path.lineTo(currPoint.getX(), currPoint.getY());
+				path.lineTo(currPoint.getX() + normal.getX(), currPoint.getY() + normal.getY());
+				path.lineTo(point.getX() + normal.getX(), point.getY() + normal.getY());
+				path.closePath();
+				Area test = new Area(path);
+				test.intersect(obstacleArea);
+				if(test.isEmpty()) edges.add(currPoint);
 				
 				
 				
