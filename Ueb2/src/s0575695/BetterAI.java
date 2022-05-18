@@ -55,9 +55,11 @@ public class BetterAI extends AI {
 		currPath = constructPath( new Point((int)info.getX(),(int) info.getY()), currPearl);
 		currTarget = currPath.get(currPath.size()-1);
 		enlistForTournament(575695);
-		Point2D test = reflexCorners.remove(0);
-		GraphNode moin = new GraphNode(test, reflexCorners);
-		System.out.println(moin.edges.size());
+		//Point2D test = reflexCorners.remove(0);
+		GraphNode testa = new GraphNode(new Point2D.Float(info.getX(), info.getY()), reflexCorners);
+		//Graph graph = new Graph(reflexCorners);
+		Point2D point = testa.edges.get(4);
+		currTarget =new Point((int)point.getX(), (int) point.getY());
 	}
 	
 	@Override
@@ -197,7 +199,13 @@ public class BetterAI extends AI {
 
 				it.currentSegment(coord);
 				nextPoint = new Point2D.Float(coord[0], coord[1]);
-				if(isReflexCorner(currPoint, prevPoint, nextPoint)) reflexCorners.add(currPoint);
+				if(isReflexCorner(currPoint, prevPoint, nextPoint)) {
+					Vector normal1  =new Vector(-(currPoint.getY() - prevPoint.getY()),currPoint.getX() - prevPoint.getX()).normalize();
+					Vector normal2  =new Vector(-(nextPoint.getY() - currPoint.getY()),nextPoint.getX() - currPoint.getX()).normalize();
+					Vector toAdd = normal1.add(normal2).scale(0.5f).normalize();
+					Point2D movedPoint = new Point2D.Double(currPoint.getX() - toAdd.x, currPoint.getY() - toAdd.y);
+					reflexCorners.add(movedPoint);
+				}
 				prevPoint = currPoint;
 				currPoint = nextPoint;
 				amountOfPoints++;
@@ -305,21 +313,29 @@ public class BetterAI extends AI {
 		
 	}
 	private class Graph {
-		private ArrayList<GraphNode> nodes;
+		public ArrayList<GraphNode> nodes;
 		public Graph(ArrayList<Point2D> points){
+			nodes = new ArrayList<>();
 			for (int i = 0; i < points.size() - 1; i++) {
 				Point2D curr = points.remove(0);
 				nodes.add(new GraphNode(curr, points));
+				
 			}
+			
 	
+		}
+		public ArrayList<Point2D> findPath(Point2D start, Point2D goal){
+			
+			return null;
 		}
 	}
 	private class GraphNode {
-		public Point point;
+		public Point2D point;
 		public ArrayList<Point2D> edges;
 		
 		public GraphNode(Point2D point, ArrayList<Point2D> points) {
 			edges = new ArrayList<>();
+			this.point = point;
 			Area obstacleArea = new Area();// new Area[info.getScene().getObstacles().length];
 			for(Path2D path : info.getScene().getObstacles()) 
 				obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
