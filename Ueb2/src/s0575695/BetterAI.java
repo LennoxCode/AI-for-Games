@@ -1,6 +1,7 @@
 package s0575695;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
@@ -76,7 +77,13 @@ public class BetterAI extends AI {
 	public Color getSecondaryColor() {
 		return Color.BLACK;
 	}
-
+	@Override
+	public void drawDebugStuff(Graphics2D gfx) {
+		gfx.setColor(Color.red);
+		for(Point2D point : reflexCorners) {
+			gfx.drawOval((int)point.getX(), (int)point.getY(), 8, 8);
+		}
+	}
 	@Override
 	public PlayerAction update() {
 		
@@ -202,7 +209,7 @@ public class BetterAI extends AI {
 				if(isReflexCorner(currPoint, prevPoint, nextPoint)) {
 					Vector normal1  =new Vector(-(currPoint.getY() - prevPoint.getY()),currPoint.getX() - prevPoint.getX()).normalize();
 					Vector normal2  =new Vector(-(nextPoint.getY() - currPoint.getY()),nextPoint.getX() - currPoint.getX()).normalize();
-					Vector toAdd = normal1.add(normal2).scale(0.5f).normalize();
+					Vector toAdd = normal1.add(normal2).scale(0.5f).normalize().scale(5);
 					Point2D movedPoint = new Point2D.Double(currPoint.getX() - toAdd.x, currPoint.getY() - toAdd.y);
 					reflexCorners.add(movedPoint);
 				}
@@ -327,6 +334,15 @@ public class BetterAI extends AI {
 		public ArrayList<Point2D> findPath(Point2D start, Point2D goal){
 			
 			return null;
+		}
+		private void addPoint(Point2D point) {
+			Area obstacleArea = new Area();// new Area[info.getScene().getObstacles().length];
+			for(Path2D path : info.getScene().getObstacles()) 
+				obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
+			
+			for(GraphNode node : nodes) {
+				
+			}
 		}
 	}
 	private class GraphNode {
