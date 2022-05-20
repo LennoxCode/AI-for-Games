@@ -28,7 +28,7 @@ import lenz.htw.ai4g.ai.DivingAction;
 import lenz.htw.ai4g.ai.Info;
 import lenz.htw.ai4g.ai.PlayerAction;
 
-public class BetterAI extends AI {
+public class BestAi extends AI {
 
 	final int AVOID_TIME = 120;
 	int currPearlIndex;
@@ -45,7 +45,7 @@ public class BetterAI extends AI {
 	ArrayList<Point2D> reflexCorners;
 	Point currTarget;
 	GraphNode currNode;
-	public BetterAI(Info info) {
+	public BestAi(Info info) {
 		super(info);
 		currPearlIndex = 0;
 		currScore = 0;
@@ -68,7 +68,7 @@ public class BetterAI extends AI {
 	
 	@Override
 	public String getName() {
-		return "normal";
+		return "A* Pathfinding";
 	}
 
 	@Override
@@ -350,7 +350,39 @@ public class BetterAI extends AI {
 		}
 		
 	}
+	private class Edge {
+		int src, dest, weight;
+
+		public Edge(int src, int dest, int weight) {
+			super();
+			this.src = src;
+			this.dest = dest;
+			this.weight = weight;
+		}
+	
+	}
 	private class Graph {
+		
+		 class Node{
+			int value, weight;
+			Point2D point;
+			public Node(int value, int weight, Point2D point) {
+				super();
+				this.value = value;
+				this.weight = weight;
+				this.point = point;
+			}
+		};
+		List<List<Node>> AdjacencyList = new ArrayList<>();
+		
+		public Graph(List<Edge> edges) {
+			for (int i = 0; i < edges.size(); i++) {
+				AdjacencyList.add(new ArrayList<>());
+			}
+			for(Edge e : edges) {
+				AdjacencyList.get(e.src).add(new Node(e.dest, e.weight, null));
+			}
+		}
 		public ArrayList<GraphNode> nodes;
 		public Graph(ArrayList<Point2D> points){
 			nodes = new ArrayList<>();
