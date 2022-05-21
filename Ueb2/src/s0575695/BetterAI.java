@@ -59,11 +59,7 @@ public class BetterAI extends AI {
 		currTarget = currPath.get(currPath.size()-1);
 		enlistForTournament(575695);
 		//Point2D test = reflexCorners.remove(0);
-		GraphNode testa = new GraphNode(new Point2D.Float(info.getX(), info.getY()), reflexCorners);
-		currNode = testa;
-		//Graph graph = new Graph(reflexCorners);
-		Point2D point = testa.edges.get(4);
-		currTarget =new Point((int)point.getX(), (int) point.getY());
+	
 	}
 	
 	@Override
