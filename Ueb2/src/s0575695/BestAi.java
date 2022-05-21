@@ -45,6 +45,8 @@ public class BestAi extends AI {
 	ArrayList<Point2D> reflexCorners;
 	Point currTarget;
 	GraphNode currNode;
+	Graph graphy;
+	List<Point2D> aStarPath;
 	public BestAi(Info info) {
 		super(info);
 		currPearlIndex = 0;
@@ -63,7 +65,20 @@ public class BestAi extends AI {
 		currNode = testa;
 		//Graph graph = new Graph(reflexCorners);
 		Point2D point = testa.edges.get(4);
+		Point2D currPos = new Point2D.Float(info.getX(), info.getY());
 		currTarget =new Point((int)point.getX(), (int) point.getY());
+		for(Point2D point1 : info.getScene().getPearl())reflexCorners.add(point1);
+		ArrayList<Point2D> corner2 = (ArrayList<Point2D>) reflexCorners.clone();
+		Graph graph = new Graph(corner2);
+		GraphNode node = new GraphNode(currPos, reflexCorners);
+		graphy = graph;
+		List<Point2D> path = graph.constructPathAStar(node, currPearl);
+		if(path != null) {
+			System.out.println(path.size());
+			aStarPath = path;
+			
+		}else System.out.println("no path found");
+		
 	}
 	
 	@Override
@@ -82,17 +97,20 @@ public class BestAi extends AI {
 	}
 	@Override
 	public void drawDebugStuff(Graphics2D gfx) {
-		/*
-		gfx.setColor(Color.red);
-		for(Point2D point : reflexCorners) {
-			gfx.drawOval((int)point.getX(), (int)point.getY(), 8, 8);
+		if(aStarPath != null) {
+			gfx.setColor(Color.red);
+			for(Point2D pointy : aStarPath) {
+				gfx.drawOval((int)pointy.getX(), (int)pointy.getY(), 5, 5);
+			}
 		}
-		gfx.setColor(Color.green);
-		Point2D postion = currNode.point;
-		for(Point2D edge : currNode.edges) {
-			gfx.drawLine((int)postion.getX(), (int)postion.getY(), (int)edge.getX(), (int)edge.getY());
-		}
-		*/
+		
+		//Point2D postion = currNode.point;
+		//GraphNode test = graphy.getGraphNode(currPearl);
+		//Point2D testPos = test.point;
+		//for(Point2D edge : test.edges) {
+		//	gfx.drawLine((int)testPos.getX(), (int)testPos.getY(), (int)edge.getX(), (int)edge.getY());
+		//}
+		
 	}
 	@Override
 	public PlayerAction update() {
@@ -240,23 +258,7 @@ public class BestAi extends AI {
 		aTob = new Vector(-aTob.y, aToC.x);
 		return aToC.dotProdut(aTob) < 0;
 	}
-	private void constructPathAStar(GraphNode start, Point2D target) {
-		PointComperator comp = new PointComperator(currTarget);
-		PriorityQueue<GraphNode> frontier = new PriorityQueue<>(comp);
-		HashMap<Point2D, Point2D> cameFrom = new HashMap<>();
-		HashMap<Point2D, Integer> HighestCost = new HashMap<>();
-		
-		frontier.add(start);
-		cameFrom.put(start.point, null);
-		HighestCost.put(start.point, 0);
-		while(frontier.size() != 0) {
-			GraphNode curr = frontier.remove();
-			if(curr.point == target)break;
-			for(Point2D next : curr.edges) {
-				
-			}
-		}
-	}
+	
 	
 	private List<Point> constructPath(Point from, Point to) {
 		Queue<Point> toLookat = new LinkedList<>();
@@ -350,52 +352,66 @@ public class BestAi extends AI {
 		}
 		
 	}
-	private class Edge {
-		int src, dest, weight;
 
-		public Edge(int src, int dest, int weight) {
-			super();
-			this.src = src;
-			this.dest = dest;
-			this.weight = weight;
-		}
-	
-	}
 	private class Graph {
-		
-		 class Node{
-			int value, weight;
-			Point2D point;
-			public Node(int value, int weight, Point2D point) {
-				super();
-				this.value = value;
-				this.weight = weight;
-				this.point = point;
-			}
-		};
-		List<List<Node>> AdjacencyList = new ArrayList<>();
-		
-		public Graph(List<Edge> edges) {
-			for (int i = 0; i < edges.size(); i++) {
-				AdjacencyList.add(new ArrayList<>());
-			}
-			for(Edge e : edges) {
-				AdjacencyList.get(e.src).add(new Node(e.dest, e.weight, null));
-			}
-		}
 		public ArrayList<GraphNode> nodes;
 		public Graph(ArrayList<Point2D> points){
 			nodes = new ArrayList<>();
 			for (int i = 0; i < points.size() - 1; i++) {
 				Point2D curr = points.remove(0);
-				nodes.add(new GraphNode(curr, points));
+				GraphNode toAdd = new GraphNode(curr, points);
+				for(GraphNode node : nodes) {
+					if(node.edges.contains(toAdd.point))toAdd.edges.add(node.point);
+				}
+				nodes.add(toAdd);
 				
 			}
 			
 	
 		}
-		public ArrayList<Point2D> findPath(Point2D start, Point2D goal){
+		public List<Point2D> constructPathAStar(GraphNode start, Point2D target) {
+			PointComperator comp = new PointComperator(currTarget);
+			PriorityQueue<GraphNode> frontier = new PriorityQueue<>(comp);
+			HashMap<Point2D, Point2D> cameFrom = new HashMap<>();
+			HashMap<Point2D, Integer> HighestCost = new HashMap<>();
 			
+			frontier.add(start);
+			cameFrom.put(start.point, null);
+			HighestCost.put(start.point, 0);
+			while(frontier.size() != 0) {
+				GraphNode curr = frontier.remove();
+				if(curr.point.distance(target) < 15) {
+					System.out.println("test");
+					List<Point2D> path = new ArrayList<>();
+					Point2D point = curr.point;
+					path.add(point);
+					while(cameFrom.get(point) != null) {
+						point = cameFrom.get(point);
+						path.add(point);
+					}
+					return path;
+					
+				}
+				for(Point2D next : curr.edges) {
+					GraphNode nuxt = getGraphNode(next);
+					if(nuxt != null) {
+						int cost =(int) next.distance(curr.point) + curr.lowestCost;
+						if(!frontier.contains(nuxt) && !cameFrom.containsKey(nuxt.point))frontier.add(nuxt);
+						if(cost < nuxt.lowestCost || nuxt.lowestCost == 0) {
+							nuxt.lowestCost = cost;
+							cameFrom.put(next, curr.point );
+						}
+						
+						
+					}
+					
+				}
+			}
+			return null;
+			
+		}
+		public GraphNode getGraphNode(Point2D point) {
+			for(GraphNode node : nodes) if(node.point.equals(point))return node;
 			return null;
 		}
 		private void addPoint(Point2D point) {
@@ -411,7 +427,7 @@ public class BestAi extends AI {
 	private class GraphNode {
 		public Point2D point;
 		public ArrayList<Point2D> edges;
-		
+		int lowestCost;
 		public GraphNode(Point2D point, ArrayList<Point2D> points) {
 			edges = new ArrayList<>();
 			this.point = point;
@@ -446,7 +462,7 @@ public class BestAi extends AI {
 		}
 		@Override
 		public int compare(GraphNode o1, GraphNode o2) {
-			return (int)o1.point.distance(target) - (int)o2.point.distance(target);
+			return  ((int)o1.point.distance(target) + o1.lowestCost)  - ((int)o2.point.distance(target) + o2.lowestCost);
 		}
 		
 	}
