@@ -13,6 +13,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Double;
 import java.awt.geom.Point2D.Float;
 import java.awt.geom.Rectangle2D;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -48,6 +49,7 @@ public class BestAi extends AI {
 	GraphNode currNode;
 	Graph graphy;
 	List<Point2D> aStarPath;
+	Point2D startPos;
 	public BestAi(Info info) {
 		super(info);
 		currPearlIndex = 0;
@@ -66,27 +68,32 @@ public class BestAi extends AI {
 		//Graph graph = new Graph(reflexCorners);
 		//Point2D point = testa.edges.get(4);
 		Point2D currPos = new Point2D.Float(info.getX(), info.getY());
+		for(int i = 0; i < reflexCorners.size(); i++) {
+			for(int f = i; f < reflexCorners.size(); f++) {
+				if(reflexCorners.get(i).distance(reflexCorners.get(f)) < 15) reflexCorners.remove(f);
+			}
+		}
+		
+		System.out.println(reflexCorners.size());
 		//currTarget =new Point((int)point.getX(), (int) point.getY());
 		for(Point2D point1 : info.getScene().getPearl())reflexCorners.add(point1);
-		ArrayList<Point2D> corner2 = (ArrayList<Point2D>) reflexCorners.clone();
-		Graph graph = new Graph(corner2);
+		Graph graph = new Graph(reflexCorners);
 		GraphNode node = new GraphNode(currPos, reflexCorners);
 		Area obstacleArea = new Area();
 		for(Path2D path : info.getScene().getObstacles()) 
 			obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
 	
 		graphy = graph;
-		node.addTransitions(graphy.nodes, obstacleArea);
+		node.addOneWayTransitions(graphy.nodes, obstacleArea);
 		List<Point2D> path = graph.constructPathAStar(node, currPearl);
 		
-		
+		startPos = currPos;
 		if(path != null) {
 			System.out.println(path.size());
 			aStarPath = path;
 			currTarget = path.get(path.size() - 1);
 			
 		}else {
-			System.out.println("no path found");
 			currTarget = currPearl;
 		}
 	
@@ -114,10 +121,19 @@ public class BestAi extends AI {
 			for(Point2D pointy : aStarPath) {
 				gfx.drawOval((int)pointy.getX(), (int)pointy.getY(), 5, 5);
 			}
+		}else {
+			//System.out.println("no path right now");
 		}
 		gfx.setColor(Color.green);
 		for(Point2D point : reflexCorners) {
 			gfx.drawOval((int)point.getX(), (int)point.getY(), 5, 5);
+		}
+		GraphNode base = graphy.nodes.get(33);
+	
+		//gfx.drawOval((int)base.point.getX(), (int)base.point.getY(), 5, 5);
+		gfx.setColor(Color.red);
+		for(GraphNode to: base.transitions) {
+			//gfx.drawLine((int) base.point.getX(), (int) base.point.getY(),(int)  to.point.getX(),(int)  to.point.getY());
 		}
 		//Point2D postion = currNode.point;
 		//GraphNode test = graphy.getGraphNode(currPearl);
@@ -143,10 +159,10 @@ public class BestAi extends AI {
 			for(Path2D path : info.getScene().getObstacles()) 
 				obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
 		
-			node.addTransitions(graphy.nodes, obstacleArea);
+			node.addOneWayTransitions(graphy.nodes, obstacleArea);
 			List<Point2D> path = graphy.constructPathAStar(node, currPearl);
 			if(path != null) {
-				System.out.println(path.size());
+				//System.out.println(path.size());
 				aStarPath = path;
 				currTarget = path.get(path.size() - 1);
 				
@@ -252,7 +268,7 @@ public class BestAi extends AI {
 				if(isReflexCorner(currPoint, prevPoint, nextPoint)) {
 					Vector normal1  =new Vector(-(currPoint.getY() - prevPoint.getY()),currPoint.getX() - prevPoint.getX()).normalize();
 					Vector normal2  =new Vector(-(nextPoint.getY() - currPoint.getY()),nextPoint.getX() - currPoint.getX()).normalize();
-					Vector toAdd = normal1.add(normal2).scale(0.5f).normalize().scale(13);
+					Vector toAdd = normal1.add(normal2).scale(0.5f).normalize().scale(25);
 					Point2D movedPoint = new Point2D.Double(currPoint.getX() - toAdd.x, currPoint.getY() - toAdd.y);
 					reflexCorners.add(movedPoint);
 				}
@@ -326,7 +342,7 @@ public class BestAi extends AI {
 			nodes = new ArrayList<>();
 			
 			for (int i = 0; i < points.size() ; i++) {
-				Point2D curr = points.remove(0);
+				Point2D curr = points.get(i);
 				GraphNode toAdd = new GraphNode(curr, points);
 				//for(GraphNode node : nodes) {
 					//if(node.edges.contains(toAdd.point))toAdd.edges.add(node.point);
@@ -336,8 +352,8 @@ public class BestAi extends AI {
 			}
 			 ArrayList<GraphNode> clone = (ArrayList<BestAi.GraphNode>) nodes.clone();
 			for(GraphNode node : nodes) {
-				clone.remove(node);
-				node.addTransitions(clone, obstacleArea);
+				//clone.remove(node);
+				node.addTransitions(nodes, obstacleArea);
 				//System.out.println(node.transitions.size());
 				
 			}
@@ -347,7 +363,7 @@ public class BestAi extends AI {
 		public List<Point2D> constructPathAStar(GraphNode start, Point2D target) {
 			PointComperator comp = new PointComperator(target);
 			ArrayList<GraphNode> frontier = new ArrayList<>();
-			HashMap<Point2D, Point2D> cameFrom = new HashMap<>();
+			HashMap<GraphNode, GraphNode> cameFrom = new HashMap<>();
 			HashMap<Point2D, Integer> HighestCost = new HashMap<>();
 			for(GraphNode node : nodes) {
 				if(node.transitions.size() < 3)System.out.println(node.transitions.size());
@@ -356,24 +372,24 @@ public class BestAi extends AI {
 			for(GraphNode node : nodes) {
 				if(node.point.distance(start.point) < nearestNode.point.distance(start.point))nearestNode = node;
 			}
-			start = nearestNode;
+			//start = nearestNode;
 			frontier.add(start);
-			cameFrom.put(start.point, null);
+			cameFrom.put(start, null);
 			start.lowestCost = -1;
 			HighestCost.put(start.point, 0);
 			while(frontier.size() != 0) {
 				GraphNode curr = frontier.remove(0);
 				if(curr.point.distance(target) < 15) {
-					System.out.println("test");
+				
 					for(GraphNode node : nodes) {
 						node.lowestCost = 0;
 					}
 					List<Point2D> path = new ArrayList<>();
-					Point2D point = curr.point;
-					path.add(point);
+					GraphNode point = curr;
+					path.add(point.point);
 					while(cameFrom.get(point) != null) {
 						point = cameFrom.get(point);
-						path.add(point);
+						path.add(point.point);
 					}
 					return path;
 					
@@ -382,10 +398,10 @@ public class BestAi extends AI {
 					//GraphNode nuxt = getGraphNode(next);
 					if(next != null) {
 						int cost =(int) next.point.distance(curr.point) + curr.lowestCost;
-						if(!frontier.contains(next) && !cameFrom.containsKey(next.point))frontier.add(next);
+						if(!frontier.contains(next) && !cameFrom.containsKey(next))frontier.add(next);
 						if(cost < next.lowestCost || next.lowestCost == 0) {
 							next.lowestCost = cost;
-							cameFrom.put(next.point, curr.point );
+							cameFrom.put(next, curr );
 						}
 						
 						
@@ -397,9 +413,11 @@ public class BestAi extends AI {
 				frontier.sort(comp);
 				
 			}
+			System.out.println("did not find path");
 			for(GraphNode node : nodes) {
 				node.lowestCost = 0;
 			}
+		
 			return null;
 			
 		}
@@ -446,20 +464,40 @@ public class BestAi extends AI {
 //				
 //			}
 		}
-		public void addTransitions(ArrayList<GraphNode> nodes, Area obstacleArea) {
+		public void addOneWayTransitions(ArrayList<GraphNode> nodes, Area obstacleArea) {
 			for(GraphNode node : nodes) {
 				Point2D currPoint = node.point;
-				Vector normal = new Vector(-(currPoint.getY() - point.getY()),currPoint.getX() - point.getX()).normalize();
+				Vector normal = new Vector(-(currPoint.getY() - point.getY()),currPoint.getX() - point.getX()).normalize().scale(6f);
 				Path2D path = new Path2D.Double();
-				path.moveTo(point.getX(), point.getY());
-				path.lineTo(currPoint.getX(), currPoint.getY());
+				path.moveTo(point.getX() - normal.getX(), point.getY() - normal.getY());
+				path.lineTo(currPoint.getX() - normal.getX(), currPoint.getY() - normal.getY());
 				path.lineTo(currPoint.getX() + normal.getX(), currPoint.getY() + normal.getY());
 				path.lineTo(point.getX() + normal.getX(), point.getY() + normal.getY());
 				path.closePath();
 				Area test = new Area(path);
 				test.intersect(obstacleArea);
+			
 				if(test.isEmpty()) {
-					transitions.add(node);
+					if(transitions.add(node));
+				
+				}
+			}
+		}
+		public void addTransitions(ArrayList<GraphNode> nodes, Area obstacleArea) {
+			for(GraphNode node : nodes) {
+				Point2D currPoint = node.point;
+				Vector normal = new Vector(-(currPoint.getY() - point.getY()),currPoint.getX() - point.getX()).normalize().scale(6f);
+				Path2D path = new Path2D.Double();
+				path.moveTo(point.getX() - normal.getX(), point.getY() - normal.getY());
+				path.lineTo(currPoint.getX() - normal.getX(), currPoint.getY() - normal.getY());
+				path.lineTo(currPoint.getX() + normal.getX(), currPoint.getY() + normal.getY());
+				path.lineTo(point.getX() + normal.getX(), point.getY() + normal.getY());
+				path.closePath();
+				Area test = new Area(path);
+				test.intersect(obstacleArea);
+			
+				if(test.isEmpty()) {
+					if(transitions.add(node));
 					node.transitions.add(this);
 				}
 			}
