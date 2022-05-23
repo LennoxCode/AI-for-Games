@@ -74,7 +74,7 @@ public class BestAIImproved extends AI {
 			}
 		}
 		
-		System.out.println(reflexCorners.size());
+		//System.out.println(reflexCorners.size());
 		//currTarget =new Point((int)point.getX(), (int) point.getY());
 		for(Point2D point1 : info.getScene().getPearl())reflexCorners.add(point1);
 		Graph graph = new Graph(reflexCorners);
@@ -94,7 +94,7 @@ public class BestAIImproved extends AI {
 			currTarget = path.get(path.size() - 1);
 			
 		}else {
-			System.out.println("did not find path");
+			//System.out.println("did not find path");
 			ArrayList<Point> removedPearls = new ArrayList<>();
 			
 			while(path == null && remainingPearls.size() > 1) {
@@ -117,7 +117,7 @@ public class BestAIImproved extends AI {
 	
 	@Override
 	public String getName() {
-		return "A* Improved";
+		return "Leonard";
 	}
 
 	@Override
@@ -131,25 +131,25 @@ public class BestAIImproved extends AI {
 	}
 	@Override
 	public void drawDebugStuff(Graphics2D gfx) {
-		if(aStarPath != null) {
-			gfx.setColor(Color.red);
-			for(Point2D pointy : aStarPath) {
-				gfx.drawOval((int)pointy.getX(), (int)pointy.getY(), 5, 5);
-			}
-		}else {
-			//System.out.println("no path right now");
-		}
-		gfx.setColor(Color.green);
-		for(Point2D point : reflexCorners) {
-			gfx.drawOval((int)point.getX(), (int)point.getY(), 5, 5);
-		}
-		GraphNode base = graphy.nodes.get(33);
-	
-		//gfx.drawOval((int)base.point.getX(), (int)base.point.getY(), 5, 5);
-		gfx.setColor(Color.red);
-		for(GraphNode to: base.transitions) {
-			//gfx.drawLine((int) base.point.getX(), (int) base.point.getY(),(int)  to.point.getX(),(int)  to.point.getY());
-		}
+//		if(aStarPath != null) {
+//			gfx.setColor(Color.red);
+//			for(Point2D pointy : aStarPath) {
+//				gfx.drawOval((int)pointy.getX(), (int)pointy.getY(), 5, 5);
+//			}
+//		}else {
+//			//System.out.println("no path right now");
+//		}
+//		gfx.setColor(Color.green);
+//		for(Point2D point : reflexCorners) {
+//			gfx.drawOval((int)point.getX(), (int)point.getY(), 5, 5);
+//		}
+//		GraphNode base = graphy.nodes.get(33);
+//	
+//		//gfx.drawOval((int)base.point.getX(), (int)base.point.getY(), 5, 5);
+//		gfx.setColor(Color.red);
+//		for(GraphNode to: base.transitions) {
+//			//gfx.drawLine((int) base.point.getX(), (int) base.point.getY(),(int)  to.point.getX(),(int)  to.point.getY());
+//		}
 		//Point2D postion = currNode.point;
 		//GraphNode test = graphy.getGraphNode(currPearl);
 		//Point2D testPos = test.point;

@@ -61,7 +61,7 @@ public class BestAi extends AI {
 		currDirection = new Vector(0, 0); 
 
 		
-		enlistForTournament(575695);
+		//enlistForTournament(575695);
 		//Point2D test = reflexCorners.remove(0);
 		GraphNode testa = new GraphNode(new Point2D.Float(info.getX(), info.getY()), reflexCorners);
 		currNode = testa;

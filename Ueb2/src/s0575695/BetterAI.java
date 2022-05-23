@@ -57,7 +57,7 @@ public class BetterAI extends AI {
 		currDirection = new Vector(0, 0); 
 		currPath = constructPath( new Point((int)info.getX(),(int) info.getY()), currPearl);
 		currTarget = currPath.get(currPath.size()-1);
-		enlistForTournament(575695);
+		//enlistForTournament(575695);
 		//Point2D test = reflexCorners.remove(0);
 	
 	}
