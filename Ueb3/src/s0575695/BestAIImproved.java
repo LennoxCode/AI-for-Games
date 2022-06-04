@@ -87,7 +87,7 @@ public class BestAIImproved extends AI {
 		//currTarget =new Point((int)point.getX(), (int) point.getY());
 		for(Point2D point1 : info.getScene().getPearl())reflexCorners.add(point1);
 		Graph graph = new Graph(reflexCorners);
-		GraphNode node = new GraphNode(currPos, reflexCorners);
+		GraphNode node = new GraphNode(getNearestAirPoint(), reflexCorners);
 		Area obstacleArea = new Area();
 		for(Path2D path : info.getScene().getObstacles()) 
 			obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
@@ -173,44 +173,28 @@ public class BestAIImproved extends AI {
 		//Point[] pearls = info.getScene().getPearl();
 		Point position = new Point((int)info.getX(),(int) info.getY());
 		if(info.getScore() > currScore) {
-			removePearl(position);
 			currScore = info.getScore();
-			if(currPearl.distance(position) < 20) {
-				currPearl = getClosestPoint(position);
-
-				Point2D currPos = new Point2D.Float(info.getX(), info.getY());
-				GraphNode node = new GraphNode(currPos, reflexCorners);
-				Area obstacleArea = new Area();
-				for(Path2D path : info.getScene().getObstacles()) 
-					obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
-
-				node.addOneWayTransitions(graphy.nodes, obstacleArea);
-				List<Point2D> path = graphy.constructPathAStar(node, currPearl);
-				if(path != null) {
-					//System.out.println(path.size());
-					aStarPath = path;
-					currTarget = path.get(path.size() - 1);
-
-				}else {
-					System.out.println("did not find path");
-					ArrayList<Point> removedPearls = new ArrayList<>();
-					
-					while(path == null && remainingPearls.size() > 1) {
-						removedPearls.add(currPearl);
-						remainingPearls.remove(currPearl);
-						currPearl = getClosestPoint(position);
-						path = graphy.constructPathAStar(node, currPearl);
-						
-					}
-					remainingPearls.addAll(removedPearls);
-					if(path != null) {
-						//System.out.println(path.size());
-						aStarPath = path;
-						currTarget = path.get(path.size() - 1);
-					}
-				}
-			}
+			removePearl(position);
+			currPearl = getClosestPoint(position);
 			
+			//seekNextPearl(position);
+			Point2D nearestAir = getNearestAirPoint();
+			Point2D currPos = new Point2D.Float(info.getX(), info.getY());
+			GraphNode node = new GraphNode(currPos, reflexCorners);
+			Area obstacleArea = new Area();
+			for(Path2D path : info.getScene().getObstacles()) 
+				obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
+
+			node.addOneWayTransitions(graphy.nodes, obstacleArea);
+			List<Point2D> path = graphy.constructPathAStar(node, nearestAir);
+			aStarPath = path;
+			currTarget = path.get(path.size() - 1);
+			seekingAir = true;
+		}
+		if(info.getAir() == info.getMaxAir() && seekingAir) {
+			System.out.println("got air");
+			seekingAir = false;
+			seekNextPearl(position);
 		}
 		if(position.distance(currTarget) < 2) {
 			if(aStarPath.size() != 1) {
@@ -234,12 +218,55 @@ public class BestAIImproved extends AI {
 		
 		
 	}
+	private void seekNextPearl(Point position) {
+		//removePearl(position);
+		currScore = info.getScore();
+		
+			currPearl = getClosestPoint(position);
+
+			Point2D currPos = new Point2D.Float(info.getX(), info.getY());
+			GraphNode node = new GraphNode(currPos, reflexCorners);
+			Area obstacleArea = new Area();
+			for(Path2D path : info.getScene().getObstacles()) 
+				obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
+
+			node.addOneWayTransitions(graphy.nodes, obstacleArea);
+			List<Point2D> path = graphy.constructPathAStar(node, currPearl);
+			if(path != null) {
+				//System.out.println(path.size());
+				aStarPath = path;
+				currTarget = path.get(path.size() - 1);
+
+			}else {
+				System.out.println("did not find path");
+				ArrayList<Point> removedPearls = new ArrayList<>();
+				
+				while(path == null && remainingPearls.size() > 1) {
+					removedPearls.add(currPearl);
+					remainingPearls.remove(currPearl);
+					currPearl = getClosestPoint(position);
+					path = graphy.constructPathAStar(node, currPearl);
+					
+				}
+				remainingPearls.addAll(removedPearls);
+				if(path != null) {
+					//System.out.println(path.size());
+					aStarPath = path;
+					currTarget = path.get(path.size() - 1);
+				}
+			}
+		
+	}
 	private Point2D getNearestAirPoint() {
-		float lowestDistance = 55555;
+		double lowestDistance = 999999999;
 		Point2D currPos = new Point2D.Float(info.getX(), info.getY());
+		Point2D compareTo = new Point2D.Double((info.getX() + currPearl.getX()) / 2, 0.f);
 		Point2D reti = airPoints.get(0);
 		for(Point2D airPoint : airPoints) 
-			if(airPoint.distance(currPearl) + airPoint.distance(currPos) < lowestDistance)reti = airPoint;
+			if(airPoint.distance(compareTo)  < lowestDistance) {
+				reti = airPoint;
+				lowestDistance = airPoint.distance(compareTo);
+			}
 		return reti;
 		
 	}
