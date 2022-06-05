@@ -30,20 +30,15 @@ import lenz.htw.ai4g.ai.DivingAction;
 import lenz.htw.ai4g.ai.Info;
 import lenz.htw.ai4g.ai.PlayerAction;
 
-public class BestAIImproved extends AI {
+public class BreathingAI extends AI {
 
-	final int AVOID_TIME = 120;
 	int currPearlIndex;
 	int currScore;
-	int avoidTime = 0;
-	int offsetAngle = 0;
-	Point center;
+	//TODO: reflexPoints can be outside of level bounds. calculate first if a point is bigger than the height or is lowere than zero;
 	Point currPearl;
 	ArrayList<Point> remainingPearls;
 	ArrayList<Point> unreachablePearls;
 	Vector currDirection;
-	float currentAngle;
-	int passedTime =0;
 	List<Point2D> currPath;
 	ArrayList<Point2D> reflexCorners;
 	ArrayList<Point2D> airPoints;
@@ -53,25 +48,27 @@ public class BestAIImproved extends AI {
 	List<Point2D> aStarPath;
 	Point2D startPos;
 	private State currState;
-	public BestAIImproved(Info info) {
+	public BreathingAI(Info info) {
 		super(info);
 		currState = State.seekingPearl;
 		currPearlIndex = 0;
 		currScore = 0;
 		constructGraph();
 		remainingPearls = new ArrayList<>();
+		unreachablePearls = new ArrayList<>();
 		airPoints = new ArrayList<>();
-		for(Point point : info.getScene().getPearl())remainingPearls.add(point);
-		currPearl = getClosestPoint(new Point(0, info.getScene().getHeight() /2));
+		for(Point point : info.getScene().getPearl()) {
+			if(point.y <= info.getScene().getHeight() * 0.68 )remainingPearls.add(point);
+			else unreachablePearls.add(point);
+		}
+		
+		
 		currDirection = new Vector(0, 0); 
-		System.out.println("Ueb3");
 		System.out.println(info.getScene().getHeight());
 		enlistForTournament(575695);
-		//Point2D test = reflexCorners.remove(0);
 		GraphNode testa = new GraphNode(new Point2D.Float(info.getX(), info.getY()), reflexCorners);
 		currNode = testa;
-		//Graph graph = new Graph(reflexCorners);
-		//Point2D point = testa.edges.get(4);
+	
 		Point2D currPos = new Point2D.Float(info.getX(), info.getY());
 		for(int i = 0; i < reflexCorners.size(); i++) {
 			for(int f = i; f < reflexCorners.size(); f++) {
@@ -84,8 +81,11 @@ public class BestAIImproved extends AI {
 			reflexCorners.add(airPoint);
 			airPoints.add(airPoint);
 		}
-		//System.out.println(reflexCorners.size());
-		//currTarget =new Point((int)point.getX(), (int) point.getY());
+	
+	
+		
+		System.out.println("amount of unreachable pearls: " + unreachablePearls.size());
+		currPearl = getClosestPoint(new Point(0, info.getScene().getHeight() /2));
 		for(Point2D point1 : info.getScene().getPearl())reflexCorners.add(point1);
 		Graph graph = new Graph(reflexCorners);
 		GraphNode node = new GraphNode(new Point.Double(currPearl.getX(), 0), reflexCorners);
@@ -127,7 +127,7 @@ public class BestAIImproved extends AI {
 	
 	@Override
 	public String getName() {
-		return "Leonard";
+		return "Mouth Breather";
 	}
 
 	@Override
@@ -183,7 +183,12 @@ public class BestAIImproved extends AI {
 		if(info.getScore() > currScore) {
 			currScore = info.getScore();
 			removePearl(position);
+			if(remainingPearls.size() == 0 && unreachablePearls != null) {
+				remainingPearls = unreachablePearls;
+				unreachablePearls = null;
+			}
 			currPearl = getClosestPoint(position);
+			
 			
 			//seekNextPearl(position);
 			Point2D nearestAir = getNearestAirPoint(currPearl);
@@ -201,19 +206,33 @@ public class BestAIImproved extends AI {
 				nearestAir = getNearestAirPoint(position);
 				path = graphy.constructPathAStar(node, nearestAir);
 			}
+			if(currState == State.SuicideCharge) path = graphy.constructPathAStar(node, currPearl);
+			else currState = State.SeekingAir;
 			aStarPath = path;
 			currTarget = path.get(path.size() - 1);
-			currState = State.SeekingAir;
+			//currState = State.SeekingAir;
 		}
-		if(info.getAir() == info.getMaxAir() && currState == State.SeekingAir || position.distance(currTarget) < 2 && currState == State.movingAlongSurface) {
+		if(info.getAir() == info.getMaxAir() && currState == State.SeekingAir || (position.distance(currTarget) < 2 && aStarPath.size() == 1  && currState == State.movingAlongSurface)) {
 		
 			//currState = State.seekingPearl;
 			seekNextPearl(position);
 			if(calcPathLenght(aStarPath) > 0.6 * info.getScene().getHeight() && currState != State.movingAlongSurface ) {
-				aStarPath = null;
-				currTarget = new Point(currPearl.x, 0);
+				Point2D nearestAir = getNearestAirPoint(new Point(currPearl.x, 0));
+				Point2D currPos = new Point2D.Float(info.getX(), info.getY());
+				GraphNode node = new GraphNode(currPos, reflexCorners);
+				Area obstacleArea = new Area();
+				for(Path2D path : info.getScene().getObstacles()) 
+					obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
+
+				
+				node.addOneWayTransitions(graphy.nodes, obstacleArea);
+				List<Point2D> path = graphy.constructPathAStar(node, getNearestAirPoint2(new Point(currPearl.x, 0)));
+				
+				aStarPath = path;
+				currTarget = path.get(path.size() - 1);
 				currState = State.movingAlongSurface;
-			}else currState = State.seekingPearl;
+			}else if(unreachablePearls != null)currState = State.seekingPearl;
+			else currState = State.SuicideCharge;
 		}
 		if(position.distance(currTarget) < 2) {
 			if(aStarPath == null) {
@@ -235,7 +254,6 @@ public class BestAIImproved extends AI {
 		direction.normalize();
 		
 		float angle = (float) Math.atan2(direction.y, direction.x);
-		currentAngle = angle;
 		return new DivingAction(info.getMaxAcceleration(), -angle);
 		
 		
@@ -291,6 +309,16 @@ public class BestAIImproved extends AI {
 			}
 		return reti;
 		
+	}
+	private Point2D getNearestAirPoint2(Point2D target) {
+		double lowestDistance = 999999999;
+		Point2D reti = airPoints.get(0);
+		for(Point2D airPoint : airPoints) 
+			if(airPoint.distance(target)  < lowestDistance) {
+				reti = airPoint;
+				lowestDistance = airPoint.distance(target);
+			}
+		return reti;
 	}
 	private double calcPathLenght(List<Point2D> path) {
 		double length = 0;
@@ -424,7 +452,7 @@ public class BestAIImproved extends AI {
 				nodes.add(toAdd);
 				
 			}
-			 ArrayList<GraphNode> clone = (ArrayList<BestAIImproved.GraphNode>) nodes.clone();
+			 ArrayList<GraphNode> clone = (ArrayList<BreathingAI.GraphNode>) nodes.clone();
 			for(GraphNode node : nodes) {
 				//clone.remove(node);
 				node.addTransitions(nodes, obstacleArea);
@@ -596,5 +624,6 @@ public class BestAIImproved extends AI {
 		SeekingAir, 
 		seekingPearl,
 		movingAlongSurface,
+		SuicideCharge
 	}
 }
