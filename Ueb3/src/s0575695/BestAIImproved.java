@@ -127,7 +127,7 @@ public class BestAIImproved extends AI {
 	
 	@Override
 	public String getName() {
-		return "Leonard";
+		return "bad breath";
 	}
 
 	@Override

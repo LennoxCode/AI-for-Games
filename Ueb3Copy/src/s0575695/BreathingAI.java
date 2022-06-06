@@ -30,12 +30,11 @@ import lenz.htw.ai4g.ai.DivingAction;
 import lenz.htw.ai4g.ai.Info;
 import lenz.htw.ai4g.ai.PlayerAction;
 
-public class BreathingAIImproved extends AI {
+public class BreathingAI extends AI {
 
 	int currPearlIndex;
 	int currScore;
 	//TODO: reflexPoints can be outside of level bounds. calculate first if a point is bigger than the height or is lowere than zero;
-	//TODO: Refractor seekPearl method to not override currPearl but just calculate way
 	Point currPearl;
 	ArrayList<Point> remainingPearls;
 	ArrayList<Point> unreachablePearls;
@@ -49,7 +48,7 @@ public class BreathingAIImproved extends AI {
 	List<Point2D> aStarPath;
 	Point2D startPos;
 	private State currState;
-	public BreathingAIImproved(Info info) {
+	public BreathingAI(Info info) {
 		super(info);
 		currState = State.seekingPearl;
 		currPearlIndex = 0;
@@ -63,12 +62,9 @@ public class BreathingAIImproved extends AI {
 			else unreachablePearls.add(point);
 		}
 		
-		if(remainingPearls.size() == 0) {
-			remainingPearls = unreachablePearls;
-			unreachablePearls = null;
-		}
+		
 		currDirection = new Vector(0, 0); 
-		//System.out.println(info.getScene().getHeight());
+		System.out.println(info.getScene().getHeight());
 		enlistForTournament(575695);
 		GraphNode testa = new GraphNode(new Point2D.Float(info.getX(), info.getY()), reflexCorners);
 		currNode = testa;
@@ -88,7 +84,7 @@ public class BreathingAIImproved extends AI {
 	
 	
 		
-		//System.out.println("amount of unreachable pearls: " + unreachablePearls.size());
+		System.out.println("amount of unreachable pearls: " + unreachablePearls.size());
 		currPearl = getClosestPoint(new Point(0, info.getScene().getHeight() /2));
 		for(Point2D point1 : info.getScene().getPearl())reflexCorners.add(point1);
 		Graph graph = new Graph(reflexCorners);
@@ -131,7 +127,7 @@ public class BreathingAIImproved extends AI {
 	
 	@Override
 	public String getName() {
-		return "Leonard";
+		return "Mouth Breather";
 	}
 
 	@Override
@@ -145,38 +141,38 @@ public class BreathingAIImproved extends AI {
 	}
 	@Override
 	public void drawDebugStuff(Graphics2D gfx) {
-//		if(aStarPath != null) {
-//			gfx.setColor(Color.red);
-//			for(Point2D pointy : aStarPath) {
-//				gfx.drawOval((int)pointy.getX(), (int)pointy.getY(), 5, 5);
-//			}
-//		}else {
-//			//System.out.println("no path right now");
-//		}
-//		gfx.setColor(Color.green);
-//		for(Point2D point : reflexCorners) {
-//			gfx.drawOval((int)point.getX(), (int)point.getY(), 5, 5);
-//		}
-//		gfx.setColor(Color.red);
-//		GraphNode base = graphy.nodes.get(33);
-//		if(aStarPath != null) {
-//			for(int i = 0; i < aStarPath.size() - 1; i++) {
-//				Point2D point1 = aStarPath.get(i);
-//				Point2D point2 = aStarPath.get(i+1);
-//				gfx.drawLine((int) point1.getX(),(int) point1.getY(), (int) point2.getX(),(int) point2.getY());
-//			}
-//		}
-//		//gfx.drawOval((int)base.point.getX(), (int)base.point.getY(), 5, 5);
-//		gfx.setColor(Color.red);
-//		for(GraphNode to: base.transitions) {
-//			//gfx.drawLine((int) base.point.getX(), (int) base.point.getY(),(int)  to.point.getX(),(int)  to.point.getY());
-//		}
-//		Point2D postion = currNode.point;
-//		GraphNode test = graphy.getGraphNode(currPearl);
-//		Point2D testPos = test.point;
-//		for(Point2D edge : test.edges) {
-//			gfx.drawLine((int)testPos.getX(), (int)testPos.getY(), (int)edge.getX(), (int)edge.getY());
-//		}
+		if(aStarPath != null) {
+			gfx.setColor(Color.red);
+			for(Point2D pointy : aStarPath) {
+				gfx.drawOval((int)pointy.getX(), (int)pointy.getY(), 5, 5);
+			}
+		}else {
+			//System.out.println("no path right now");
+		}
+		gfx.setColor(Color.green);
+		for(Point2D point : reflexCorners) {
+			gfx.drawOval((int)point.getX(), (int)point.getY(), 5, 5);
+		}
+		gfx.setColor(Color.red);
+		GraphNode base = graphy.nodes.get(33);
+		if(aStarPath != null) {
+			for(int i = 0; i < aStarPath.size() - 1; i++) {
+				Point2D point1 = aStarPath.get(i);
+				Point2D point2 = aStarPath.get(i+1);
+				gfx.drawLine((int) point1.getX(),(int) point1.getY(), (int) point2.getX(),(int) point2.getY());
+			}
+		}
+		//gfx.drawOval((int)base.point.getX(), (int)base.point.getY(), 5, 5);
+		gfx.setColor(Color.red);
+		for(GraphNode to: base.transitions) {
+			//gfx.drawLine((int) base.point.getX(), (int) base.point.getY(),(int)  to.point.getX(),(int)  to.point.getY());
+		}
+		Point2D postion = currNode.point;
+		GraphNode test = graphy.getGraphNode(currPearl);
+		Point2D testPos = test.point;
+		for(Point2D edge : test.edges) {
+			gfx.drawLine((int)testPos.getX(), (int)testPos.getY(), (int)edge.getX(), (int)edge.getY());
+		}
 		
 	}
 	@Override
@@ -190,9 +186,8 @@ public class BreathingAIImproved extends AI {
 			if(remainingPearls.size() == 0 && unreachablePearls != null) {
 				remainingPearls = unreachablePearls;
 				unreachablePearls = null;
-				currPearl = getBestPearlPocket(position);
-			}else currPearl = getClosestPoint(position);
-			
+			}
+			currPearl = getClosestPoint(position);
 			
 			
 			//seekNextPearl(position);
@@ -267,8 +262,8 @@ public class BreathingAIImproved extends AI {
 		//removePearl(position);
 		currScore = info.getScore();
 		
-			if(unreachablePearls != null) currPearl = getClosestPoint(position);
-			else currPearl = getBestPearlPocket(position);
+			currPearl = getClosestPoint(position);
+
 			Point2D currPos = new Point2D.Float(info.getX(), info.getY());
 			GraphNode node = new GraphNode(currPos, reflexCorners);
 			Area obstacleArea = new Area();
@@ -349,25 +344,6 @@ public class BreathingAIImproved extends AI {
 			if(playerPos.distance(pearl) < playerPos.distance(ClosestPearl))ClosestPearl = pearl;
 		}
 		return ClosestPearl;
-	}
-	private Point getBestPearlPocket(Point2D playerPos){
-		Point bestPoint = null;
-		double lowestDistance = 999999999;
-		for(int i = 0; i < remainingPearls.size(); i++) {
-			Point point = remainingPearls.get(i);
-			double currDistance = 0;
-			for(int f = 0; f < remainingPearls.size(); f++) {
-				currDistance += Math.pow(point.distance(remainingPearls.get(f)), 2);
-				
-			}
-			if(currDistance < lowestDistance) {
-				lowestDistance = currDistance;
-				bestPoint = point;
-			}
-		}
-			
-		return bestPoint;
-		
 	}
 	private Point normalize(Point toNormalize) {
 		float len = getLen(toNormalize);
@@ -476,7 +452,7 @@ public class BreathingAIImproved extends AI {
 				nodes.add(toAdd);
 				
 			}
-			 ArrayList<GraphNode> clone = (ArrayList<BreathingAIImproved.GraphNode>) nodes.clone();
+			 ArrayList<GraphNode> clone = (ArrayList<BreathingAI.GraphNode>) nodes.clone();
 			for(GraphNode node : nodes) {
 				//clone.remove(node);
 				node.addTransitions(nodes, obstacleArea);
@@ -491,12 +467,17 @@ public class BreathingAIImproved extends AI {
 			ArrayList<GraphNode> frontier = new ArrayList<>();
 			HashMap<GraphNode, GraphNode> cameFrom = new HashMap<>();
 			HashMap<Point2D, Integer> HighestCost = new HashMap<>();
-		
-			
+			for(GraphNode node : nodes) {
+				if(node.transitions.size() < 3)System.out.println(node.transitions.size());
+			}
+			GraphNode nearestNode = nodes.get(0);
+			for(GraphNode node : nodes) {
+				if(node.point.distance(start.point) < nearestNode.point.distance(start.point))nearestNode = node;
+			}
 			//start = nearestNode;
 			frontier.add(start);
 			cameFrom.put(start, null);
-			start.lowestCost = 1;
+			start.lowestCost = -1;
 			HighestCost.put(start.point, 0);
 			while(frontier.size() != 0) {
 				GraphNode curr = frontier.remove(0);

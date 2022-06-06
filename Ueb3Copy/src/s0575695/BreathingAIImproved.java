@@ -59,7 +59,7 @@ public class BreathingAIImproved extends AI {
 		unreachablePearls = new ArrayList<>();
 		airPoints = new ArrayList<>();
 		for(Point point : info.getScene().getPearl()) {
-			if(point.y <= info.getScene().getHeight() * 0.68 )remainingPearls.add(point);
+			if(info.getMaxVelocity() / info.getMaxAir() <= point.y * 2)remainingPearls.add(point);
 			else unreachablePearls.add(point);
 		}
 		
@@ -72,13 +72,14 @@ public class BreathingAIImproved extends AI {
 		enlistForTournament(575695);
 		GraphNode testa = new GraphNode(new Point2D.Float(info.getX(), info.getY()), reflexCorners);
 		currNode = testa;
-	
+		System.out.println(info.getMaxAir());
 		Point2D currPos = new Point2D.Float(info.getX(), info.getY());
 		for(int i = 0; i < reflexCorners.size(); i++) {
 			for(int f = i; f < reflexCorners.size(); f++) {
 				if(reflexCorners.get(i).distance(reflexCorners.get(f)) < 15) reflexCorners.remove(f);
 			}
 		}
+		
 		int width = info.getScene().getWidth();
 		for(int i = 0; i < width ; i+=40 ) {
 			Point2D airPoint = new Point(i, 0);
@@ -86,9 +87,9 @@ public class BreathingAIImproved extends AI {
 			airPoints.add(airPoint);
 		}
 	
-	
-		
-		//System.out.println("amount of unreachable pearls: " + unreachablePearls.size());
+		System.out.println(info.getMaxVelocity());
+		//System.out.println("prev calc: " + info.getMaxVelocity() > info.getAir());
+		System.out.println("amount of unreachable pearls new : " + unreachablePearls.size());
 		currPearl = getClosestPoint(new Point(0, info.getScene().getHeight() /2));
 		for(Point2D point1 : info.getScene().getPearl())reflexCorners.add(point1);
 		Graph graph = new Graph(reflexCorners);
@@ -205,17 +206,26 @@ public class BreathingAIImproved extends AI {
 
 			
 			node.addOneWayTransitions(graphy.nodes, obstacleArea);
-			List<Point2D> path = graphy.constructPathAStar(node, nearestAir);
-			if(calcPathLenght(path) > 0.66 * info.getScene().getHeight() ) {
-				System.out.println("path too long");
-				nearestAir = getNearestAirPoint(position);
+			List<Point2D> path = graphy.constructPathAStar(node, currPearl);
+			int yFactor = currPearl.y;
+			if(currScore == 9)yFactor = 0;
+			if(calcPathLenght(path) + yFactor >  info.getAir() / info.getMaxVelocity() ){
 				path = graphy.constructPathAStar(node, nearestAir);
+				if(calcPathLenght(path) >info.getAir() / info.getMaxVelocity()  ) {
+					System.out.println("path too long");
+					nearestAir = getNearestAirPoint(position);
+					path = graphy.constructPathAStar(node, nearestAir);
+				}
+				if(currState == State.SuicideCharge) path = graphy.constructPathAStar(node, currPearl);
+				else currState = State.SeekingAir;
+				aStarPath = path;
+				currTarget = path.get(path.size() - 1);
+				//currState = State.SeekingAir;
+			}else {
+				aStarPath = path;
+				currTarget = path.get(path.size() - 1);
 			}
-			if(currState == State.SuicideCharge) path = graphy.constructPathAStar(node, currPearl);
-			else currState = State.SeekingAir;
-			aStarPath = path;
-			currTarget = path.get(path.size() - 1);
-			//currState = State.SeekingAir;
+		
 		}
 		if(info.getAir() == info.getMaxAir() && currState == State.SeekingAir || (position.distance(currTarget) < 2 && aStarPath.size() == 1  && currState == State.movingAlongSurface)) {
 		
