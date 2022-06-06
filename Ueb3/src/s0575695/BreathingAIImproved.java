@@ -63,7 +63,10 @@ public class BreathingAIImproved extends AI {
 			else unreachablePearls.add(point);
 		}
 		
-		
+		if(remainingPearls.size() == 0) {
+			remainingPearls = unreachablePearls;
+			unreachablePearls = null;
+		}
 		currDirection = new Vector(0, 0); 
 		System.out.println(info.getScene().getHeight());
 		enlistForTournament(575695);
@@ -488,17 +491,12 @@ public class BreathingAIImproved extends AI {
 			ArrayList<GraphNode> frontier = new ArrayList<>();
 			HashMap<GraphNode, GraphNode> cameFrom = new HashMap<>();
 			HashMap<Point2D, Integer> HighestCost = new HashMap<>();
-			for(GraphNode node : nodes) {
-				if(node.transitions.size() < 3)System.out.println(node.transitions.size());
-			}
-			GraphNode nearestNode = nodes.get(0);
-			for(GraphNode node : nodes) {
-				if(node.point.distance(start.point) < nearestNode.point.distance(start.point))nearestNode = node;
-			}
+		
+			
 			//start = nearestNode;
 			frontier.add(start);
 			cameFrom.put(start, null);
-			start.lowestCost = -1;
+			start.lowestCost = 1;
 			HighestCost.put(start.point, 0);
 			while(frontier.size() != 0) {
 				GraphNode curr = frontier.remove(0);
