@@ -28,8 +28,9 @@ public class ShoppingAI extends AI {
 	int upgradeCount;
 	//TODO: reflexPoints can be outside of level bounds. calculate first if a point is bigger than the height or is lowere than zero;
 	//TODO: Refractor seekPearl method to not override currPearl but just calculate way
-	//L1qQaEom9h RNmh8L2g5B
-	//cGt1EQeL7W 1X8ha9TP0h
+	
+	//7V9nYSL8pi JAmnfgvqMP
+	//NhAZ0F75ZW ZuYYSNoMco
 	Point currPearl;
 	Point currTrash;
 	Point shopPos;
@@ -94,7 +95,7 @@ public class ShoppingAI extends AI {
 		//System.out.println("prev calc: " + info.getMaxVelocity() > info.getAir());
 		//System.out.println("amount of unreachable pearls new : " + unreachablePearls.size());
 		currPearl = getClosestPoint(new Point(0, info.getScene().getHeight() /2));
-		currTrash = getBestTrash(currPos);
+		currTrash = getClosestTrash(currPos);
 		for(Point2D point1 : info.getScene().getPearl())reflexCorners.add(point1);
 		Graph graph = new Graph(reflexCorners);
 		GraphNode node = new GraphNode(currPos, reflexCorners);
@@ -150,38 +151,38 @@ public class ShoppingAI extends AI {
 	}
 	@Override
 	public void drawDebugStuff(Graphics2D gfx) {
-//		if(aStarPath != null) {
-//			gfx.setColor(Color.red);
-//			for(Point2D pointy : aStarPath) {
-//				gfx.drawOval((int)pointy.getX(), (int)pointy.getY(), 5, 5);
-//			}
-//		}else {
-//			//System.out.println("no path right now");
-//		}
-//		gfx.setColor(Color.green);
-//		for(Point2D point : reflexCorners) {
-//			gfx.drawOval((int)point.getX(), (int)point.getY(), 5, 5);
-//		}
-//		gfx.setColor(Color.red);
-//		GraphNode base = graphy.nodes.get(33);
-//		if(aStarPath != null) {
-//			for(int i = 0; i < aStarPath.size() - 1; i++) {
-//				Point2D point1 = aStarPath.get(i);
-//				Point2D point2 = aStarPath.get(i+1);
-//				gfx.drawLine((int) point1.getX(),(int) point1.getY(), (int) point2.getX(),(int) point2.getY());
-//			}
-//		}
-//		//gfx.drawOval((int)base.point.getX(), (int)base.point.getY(), 5, 5);
-//		gfx.setColor(Color.red);
-//		for(GraphNode to: base.transitions) {
-//			//gfx.drawLine((int) base.point.getX(), (int) base.point.getY(),(int)  to.point.getX(),(int)  to.point.getY());
-//		}
-//		Point2D postion = currNode.point;
-//		GraphNode test = graphy.getGraphNode(currPearl);
-//		Point2D testPos = test.point;
-//		for(Point2D edge : test.edges) {
-//			gfx.drawLine((int)testPos.getX(), (int)testPos.getY(), (int)edge.getX(), (int)edge.getY());
-//		}
+		if(aStarPath != null) {
+			gfx.setColor(Color.red);
+			for(Point2D pointy : aStarPath) {
+				gfx.drawOval((int)pointy.getX(), (int)pointy.getY(), 5, 5);
+			}
+		}else {
+			//System.out.println("no path right now");
+		}
+		gfx.setColor(Color.green);
+		for(Point2D point : reflexCorners) {
+			gfx.drawOval((int)point.getX(), (int)point.getY(), 5, 5);
+		}
+		gfx.setColor(Color.red);
+		GraphNode base = graphy.nodes.get(33);
+		if(aStarPath != null) {
+			for(int i = 0; i < aStarPath.size() - 1; i++) {
+				Point2D point1 = aStarPath.get(i);
+				Point2D point2 = aStarPath.get(i+1);
+				gfx.drawLine((int) point1.getX(),(int) point1.getY(), (int) point2.getX(),(int) point2.getY());
+			}
+		}
+		//gfx.drawOval((int)base.point.getX(), (int)base.point.getY(), 5, 5);
+		gfx.setColor(Color.red);
+		for(GraphNode to: base.transitions) {
+			//gfx.drawLine((int) base.point.getX(), (int) base.point.getY(),(int)  to.point.getX(),(int)  to.point.getY());
+		}
+		Point2D postion = currNode.point;
+		GraphNode test = graphy.getGraphNode(currPearl);
+		Point2D testPos = test.point;
+		for(Point2D edge : test.edges) {
+			gfx.drawLine((int)testPos.getX(), (int)testPos.getY(), (int)edge.getX(), (int)edge.getY());
+		}
 		
 	}
 	@Override
@@ -189,45 +190,47 @@ public class ShoppingAI extends AI {
 		
 		//Point[] pearls = info.getScene().getPearl();
 		Point position = new Point((int)info.getX(),(int) info.getY());
-		if(info.getScore() > currScore && currState != State.SeekingTrash && currState != State.SeekingShop) {
+		if(info.getScore() > currScore) {
 			currScore = info.getScore();
 			removePearl(position);
-			if(remainingPearls.size() == 0 && unreachablePearls != null) {
-				remainingPearls = unreachablePearls;
-				unreachablePearls = null;
-				currPearl = getBestPearlPocket(position);
-			}else currPearl = getClosestPoint(position);
-			
-			
-			
-			//seekNextPearl(position);
-			Point2D nearestAir = getNearestAirPoint(currPearl);
-			Point2D currPos = new Point2D.Float(info.getX(), info.getY());
-			GraphNode node = new GraphNode(currPos, reflexCorners);
-			Area obstacleArea = new Area();
-			for(Path2D path : info.getScene().getObstacles()) 
-				obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
+			if(currState != State.SeekingTrash && currState != State.SeekingShop) {
+				if(remainingPearls.size() == 0 && unreachablePearls != null) {
+					remainingPearls = unreachablePearls;
+					unreachablePearls = null;
+					currPearl = getBestPearlPocket(position);
+				}else currPearl = getClosestPoint(position);
+				
+				
+				
+				//seekNextPearl(position);
+				Point2D nearestAir = getNearestAirPoint(currPearl);
+				Point2D currPos = new Point2D.Float(info.getX(), info.getY());
+				GraphNode node = new GraphNode(currPos, reflexCorners);
+				Area obstacleArea = new Area();
+				for(Path2D path : info.getScene().getObstacles()) 
+					obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
 
-			
-			node.addOneWayTransitions(graphy.nodes, obstacleArea);
-			List<Point2D> path = graphy.constructPathAStar(node, currPearl);
-			int yFactor = currPearl.y;
-			if(currScore == 9)yFactor = 0;
-			if((calcPathLenght(path) + yFactor) / info.getMaxVelocity() >  info.getAir()  ){
-				path = graphy.constructPathAStar(node, nearestAir);
-				if(calcPathLenght(path) >info.getAir() / info.getMaxVelocity()  ) {
-					System.out.println("path too long");
-					nearestAir = getNearestAirPoint(position);
+				
+				node.addOneWayTransitions(graphy.nodes, obstacleArea);
+				List<Point2D> path = graphy.constructPathAStar(node, currPearl);
+				int yFactor = currPearl.y;
+				if(currScore == 9)yFactor = 0;
+				if((calcPathLenght(path) + yFactor) / info.getMaxVelocity() >  info.getAir()  ){
 					path = graphy.constructPathAStar(node, nearestAir);
+					if(calcPathLenght(path) >info.getAir() / info.getMaxVelocity()  ) {
+						System.out.println("path too long");
+						nearestAir = getNearestAirPoint(position);
+						path = graphy.constructPathAStar(node, nearestAir);
+					}
+					if(currState == State.SuicideCharge) path = graphy.constructPathAStar(node, currPearl);
+					else currState = State.SeekingAir;
+					aStarPath = path;
+					currTarget = path.get(path.size() - 1);
+					//currState = State.SeekingAir;
+				}else {
+					aStarPath = path;
+					currTarget = path.get(path.size() - 1);
 				}
-				if(currState == State.SuicideCharge) path = graphy.constructPathAStar(node, currPearl);
-				else currState = State.SeekingAir;
-				aStarPath = path;
-				currTarget = path.get(path.size() - 1);
-				//currState = State.SeekingAir;
-			}else {
-				aStarPath = path;
-				currTarget = path.get(path.size() - 1);
 			}
 		
 		}
@@ -261,7 +264,7 @@ public class ShoppingAI extends AI {
 			//currState = State.seekingPearl;
 			
 		}
-		if(position.distance(currTarget) < 2) {
+		if(position.distance(currTarget) < 4) {
 			if(aStarPath == null) {
 				
 			}
@@ -269,7 +272,8 @@ public class ShoppingAI extends AI {
 				aStarPath.remove(aStarPath.size() - 1);
 				currTarget = aStarPath.get(aStarPath.size()-1);
 			}else {
-				currTarget = currPearl;
+				if(currState != State.SeekingTrash)currTarget = currPearl;
+				else currTarget = currTrash;
 			}
 		}
 		if(info.getMoney() > currMoney && currState == State.SeekingTrash) {
@@ -285,10 +289,16 @@ public class ShoppingAI extends AI {
 				System.out.println(currTrash);
 				node.addOneWayTransitions(graphy.nodes, obstacleArea);
 				List<Point2D> path = graphy.constructPathAStar(node, shopPos);
-				
+				if(calcPathLenght(path) / info.getMaxVelocity() >  info.getAir()){
+					Point2D nearestAir = getNearestAirPoint(position);
+					path = graphy.constructPathAStar(node, nearestAir);
+					currState = State.SeekingAir;
+				}else {
+					currState = State.SeekingShop;
+				}
 				aStarPath = path;
 				currTarget = path.get(path.size() - 1);;
-				currState = State.SeekingShop;
+				
 			}else {
 				
 				Point2D currPos = new Point2D.Float(info.getX(), info.getY());
@@ -298,11 +308,11 @@ public class ShoppingAI extends AI {
 				for(Path2D path : info.getScene().getObstacles()) 
 					obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
 
-				System.out.println(currTrash);
+				//System.out.println(currTrash);
 				node.addOneWayTransitions(graphy.nodes, obstacleArea);
 				List<Point2D> path = graphy.constructPathAStar(node, currTrash);
 				if((calcPathLenght(path) + currTrash.y) / info.getMaxVelocity() >  info.getAir()  ){
-					Point2D nearestAir = new Point.Double(currPos.getX(), 0);
+					Point2D nearestAir = getNearestAirPoint(position);
 					path = graphy.constructPathAStar(node, nearestAir);
 					if(calcPathLenght(path) >info.getAir() / info.getMaxVelocity()  ) {
 						System.out.println("path too long");
@@ -331,8 +341,11 @@ public class ShoppingAI extends AI {
 				upgradeCount++;
 				currState =State.SeekingTrash;
 				currTrash = getClosestTrash(position);
+				List<Point2D> path = graphy.constructPathFromPos(position, currTrash);
 				currTarget = currTrash;
 				currMoney = 0;
+				aStarPath = path;
+				currTarget = path.get(path.size() - 1);
 				return new ShoppingAction(ShoppingItem.MOTORIZED_FLIPPERS);
 			}else if(upgradeCount == 2){
 				upgradeCount++;
@@ -340,8 +353,8 @@ public class ShoppingAI extends AI {
 			}else {
 				upgradeCount++;
 			
-				currTrash =getClosestPoint(position);
-				List<Point2D> path = graphy.constructPathFromPos(position, currTrash);
+				currPearl =getClosestPoint(position);
+				List<Point2D> path = graphy.constructPathFromPos(position, currPearl);
 				currState = State.seekingPearl;
 				aStarPath = path;
 				currTarget = path.get(path.size() - 1);
