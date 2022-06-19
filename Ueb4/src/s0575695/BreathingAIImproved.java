@@ -73,7 +73,7 @@ public class BreathingAIImproved extends AI {
 		enlistForTournament(575695);
 		GraphNode testa = new GraphNode(new Point2D.Float(info.getX(), info.getY()), reflexCorners);
 		currNode = testa;
-		System.out.println(info.getMaxAir());
+		//System.out.println(info.getMaxAir());
 		Point2D currPos = new Point2D.Float(info.getX(), info.getY());
 		for(int i = 0; i < reflexCorners.size(); i++) {
 			for(int f = i; f < reflexCorners.size(); f++) {
@@ -88,9 +88,9 @@ public class BreathingAIImproved extends AI {
 			airPoints.add(airPoint);
 		}
 	
-		System.out.println(info.getMaxVelocity());
+		//System.out.println(info.getMaxVelocity());
 		//System.out.println("prev calc: " + info.getMaxVelocity() > info.getAir());
-		System.out.println("amount of unreachable pearls new : " + unreachablePearls.size());
+		//System.out.println("amount of unreachable pearls new : " + unreachablePearls.size());
 		currPearl = getClosestPoint(new Point(0, info.getScene().getHeight() /2));
 		for(Point2D point1 : info.getScene().getPearl())reflexCorners.add(point1);
 		Graph graph = new Graph(reflexCorners);
@@ -487,7 +487,6 @@ public class BreathingAIImproved extends AI {
 				nodes.add(toAdd);
 				
 			}
-			 ArrayList<GraphNode> clone = (ArrayList<BreathingAIImproved.GraphNode>) nodes.clone();
 			for(GraphNode node : nodes) {
 				//clone.remove(node);
 				node.addTransitions(nodes, obstacleArea);

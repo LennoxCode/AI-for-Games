@@ -29,18 +29,26 @@ import lenz.htw.ai4g.ai.AI;
 import lenz.htw.ai4g.ai.DivingAction;
 import lenz.htw.ai4g.ai.Info;
 import lenz.htw.ai4g.ai.PlayerAction;
+import lenz.htw.ai4g.ai.ShoppingAction;
+import lenz.htw.ai4g.ai.ShoppingItem;
 
-public class BreathingAIImproved extends AI {
+public class ShoppingAI extends AI {
 
 	int currPearlIndex;
 	int currScore;
+	int currMoney;
+	int upgradeCount;
 	//TODO: reflexPoints can be outside of level bounds. calculate first if a point is bigger than the height or is lowere than zero;
 	//TODO: Refractor seekPearl method to not override currPearl but just calculate way
+	//L1qQaEom9h RNmh8L2g5B
 	Point currPearl;
+	Point currTrash;
+	Point shopPos;
 	ArrayList<Point> remainingPearls;
 	ArrayList<Point> unreachablePearls;
 	Vector currDirection;
 	List<Point2D> currPath;
+	ArrayList<Point> remainingTrash;
 	ArrayList<Point2D> reflexCorners;
 	ArrayList<Point2D> airPoints;
 	Point2D currTarget;
@@ -49,21 +57,23 @@ public class BreathingAIImproved extends AI {
 	List<Point2D> aStarPath;
 	Point2D startPos;
 	private State currState;
-	public BreathingAIImproved(Info info) {
+	public ShoppingAI(Info info) {
 		super(info);
-		currState = State.seekingPearl;
+		currState = State.SeekingTrash;
 		currPearlIndex = 0;
 		currScore = 0;
 		constructGraph();
+		shopPos = new Point(info.getScene().getShopPosition(), 0);
 		remainingPearls = new ArrayList<>();
 		unreachablePearls = new ArrayList<>();
 		airPoints = new ArrayList<>();
+		remainingTrash = new ArrayList<>();
 		for(Point point : info.getScene().getPearl()) {
 			if(info.getMaxVelocity() / info.getMaxAir() <= point.y * 2)remainingPearls.add(point);
 			else unreachablePearls.add(point);
 		}
 		info.getScene().getRecyclingProducts();
-		
+	
 		if(remainingPearls.size() == 0) {
 			remainingPearls = unreachablePearls;
 			unreachablePearls = null;
@@ -80,7 +90,10 @@ public class BreathingAIImproved extends AI {
 				if(reflexCorners.get(i).distance(reflexCorners.get(f)) < 15) reflexCorners.remove(f);
 			}
 		}
-		
+		for(Point point: info.getScene().getRecyclingProducts()) {
+			remainingTrash.add(point);
+			reflexCorners.add(point);
+		}
 		int width = info.getScene().getWidth();
 		for(int i = 0; i < width ; i+=40 ) {
 			Point2D airPoint = new Point(i, 0);
@@ -92,16 +105,17 @@ public class BreathingAIImproved extends AI {
 		//System.out.println("prev calc: " + info.getMaxVelocity() > info.getAir());
 		System.out.println("amount of unreachable pearls new : " + unreachablePearls.size());
 		currPearl = getClosestPoint(new Point(0, info.getScene().getHeight() /2));
+		currTrash = getBestTrash(currPos);
 		for(Point2D point1 : info.getScene().getPearl())reflexCorners.add(point1);
 		Graph graph = new Graph(reflexCorners);
-		GraphNode node = new GraphNode(new Point.Double(currPearl.getX(), 0), reflexCorners);
+		GraphNode node = new GraphNode(currPos, reflexCorners);
 		Area obstacleArea = new Area();
 		for(Path2D path : info.getScene().getObstacles()) 
 			obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
 	
 		graphy = graph;
 		node.addOneWayTransitions(graphy.nodes, obstacleArea);
-		List<Point2D> path = graph.constructPathAStar(node, currPearl);
+		List<Point2D> path = graph.constructPathAStar(node, currTrash);
 		
 		startPos = currPos;
 		if(path != null) {
@@ -133,7 +147,7 @@ public class BreathingAIImproved extends AI {
 	
 	@Override
 	public String getName() {
-		return "Leonard";
+		return "Shopping Queen";
 	}
 
 	@Override
@@ -186,7 +200,7 @@ public class BreathingAIImproved extends AI {
 		
 		//Point[] pearls = info.getScene().getPearl();
 		Point position = new Point((int)info.getX(),(int) info.getY());
-		if(info.getScore() > currScore) {
+		if(info.getScore() > currScore && currState != State.SeekingTrash) {
 			currScore = info.getScore();
 			removePearl(position);
 			if(remainingPearls.size() == 0 && unreachablePearls != null) {
@@ -261,11 +275,52 @@ public class BreathingAIImproved extends AI {
 				currTarget = currPearl;
 			}
 		}
-		//if(rayCast2(position, seek(currPearl).normalize(), currPearl)) {
-			//Vector direction = seek(currPearl);
-			//float angle = (float) Math.atan2(direction.y, direction.x);
-			//return new DivingAction(info.getMaxAcceleration(), -angle);
-		//}
+		if(info.getMoney() > currMoney && currState == State.SeekingTrash) {
+			currMoney = info.getMoney();
+			removeTrash(position);
+			if(currMoney >= 4) {
+				currTarget = shopPos;
+				currState = State.SeekingShop;
+			}else {
+				Point2D currPos = new Point2D.Float(info.getX(), info.getY());
+				currTrash = getClosestTrash(currPos);
+				GraphNode node = new GraphNode(currPos, reflexCorners);
+				Area obstacleArea = new Area();
+				for(Path2D path : info.getScene().getObstacles()) 
+					obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
+
+				System.out.println(currTrash);
+				node.addOneWayTransitions(graphy.nodes, obstacleArea);
+				List<Point2D> path = graphy.constructPathAStar(node, currTrash);
+				
+				aStarPath = path;
+				currTarget = path.get(path.size() - 1);;
+			}
+	
+		}
+		if(position.distance(shopPos) < 10 && currState == State.SeekingShop) {
+			System.out.println("found shop");
+			if(upgradeCount == 0) {
+				upgradeCount++;
+				return new ShoppingAction(ShoppingItem.STREAMLINED_WIG);
+			}else if(upgradeCount == 1) {
+				upgradeCount++;
+				currState =State.SeekingTrash;
+				currTrash = getClosestTrash(position);
+				currTarget = currTrash;
+				currMoney = 0;
+				return new ShoppingAction(ShoppingItem.MOTORIZED_FLIPPERS);
+			}else if(upgradeCount == 2){
+				upgradeCount++;
+				return new ShoppingAction(ShoppingItem.BALLOON_SET);
+			}else {
+				upgradeCount++;
+				currState = State.SeekingAir;
+				return new ShoppingAction(ShoppingItem.CORNER_CUTTER);
+				
+			}
+			
+		}
 		Vector direction = seek(currTarget);
 		direction.normalize();
 		
@@ -344,9 +399,7 @@ public class BreathingAIImproved extends AI {
 	private Vector seek(Point2D target) {
 		return new Vector(target.getX() - info.getX(), target.getY() - info.getY());
 	}
-	private Point flee(Point target) {
-		return new Point((int) -(target.x - info.getX()), (int) (target.y - info.getY()));
-	}
+
 	private float getLen(Point point) {
 		return (float) Math.sqrt(Math.pow(point.getX(), 2) + Math.pow(point.getY(), 2));
 	}
@@ -360,6 +413,35 @@ public class BreathingAIImproved extends AI {
 			if(playerPos.distance(pearl) < playerPos.distance(ClosestPearl))ClosestPearl = pearl;
 		}
 		return ClosestPearl;
+	}
+	private Point getClosestTrash(Point2D playerPos) {
+		Point closestTrash = remainingTrash.get(0);
+		for(Point trash: remainingTrash) {
+			if(playerPos.distance(trash) < playerPos.distance(closestTrash))closestTrash = trash;
+		}
+		return closestTrash;
+	}
+	private void removeTrash(Point2D playerPos) {
+		Point clostestTrash = getClosestTrash(playerPos);
+		remainingTrash.remove(clostestTrash);
+	}
+	private Point getBestTrash(Point2D playerPos) {
+		Point bestPoint = null;
+		double lowestDistance = 999999999;
+		for(int i = 0; i < remainingTrash.size(); i++) {
+			Point point = remainingTrash.get(i);
+			double currDistance = 0;
+			for(int f = 0; f < remainingTrash.size(); f++) {
+				currDistance += Math.pow(point.distance(remainingTrash.get(f)), 2);
+				
+			}
+			if(currDistance < lowestDistance) {
+				lowestDistance = currDistance;
+				bestPoint = point;
+			}
+		}
+			
+		return bestPoint;
 	}
 	private Point getBestPearlPocket(Point2D playerPos){
 		Point bestPoint = null;
@@ -380,10 +462,7 @@ public class BreathingAIImproved extends AI {
 		return bestPoint;
 		
 	}
-	private Point normalize(Point toNormalize) {
-		float len = getLen(toNormalize);
-		return new Point((int)( toNormalize.getX() / len), (int) (toNormalize.getY() / len));
-	}
+
 
 	private void constructGraph() {
 		Path2D[] obstacles = info.getScene().getObstacles();
@@ -487,7 +566,6 @@ public class BreathingAIImproved extends AI {
 				nodes.add(toAdd);
 				
 			}
-			 ArrayList<GraphNode> clone = (ArrayList<BreathingAIImproved.GraphNode>) nodes.clone();
 			for(GraphNode node : nodes) {
 				//clone.remove(node);
 				node.addTransitions(nodes, obstacleArea);
@@ -653,7 +731,9 @@ public class BreathingAIImproved extends AI {
 	private enum State{
 		SeekingAir, 
 		seekingPearl,
+		SeekingTrash,
 		movingAlongSurface,
-		SuicideCharge
+		SuicideCharge,
+		SeekingShop
 	}
 }
