@@ -20,7 +20,7 @@ import lenz.htw.ai4g.ai.PlayerAction;
 import lenz.htw.ai4g.ai.ShoppingAction;
 import lenz.htw.ai4g.ai.ShoppingItem;
 
-public class ShoppingAI extends AI {
+public class ShoppingAIImproved extends AI {
 
 	int currPearlIndex;
 	int currScore;
@@ -49,7 +49,7 @@ public class ShoppingAI extends AI {
 	List<Point2D> aStarPath;
 	Point2D startPos;
 	private State currState;
-	public ShoppingAI(Info info) {
+	public ShoppingAIImproved(Info info) {
 		super(info);
 		currState = State.SeekingTrash;
 		currPearlIndex = 0;
@@ -97,7 +97,7 @@ public class ShoppingAI extends AI {
 		//System.out.println("prev calc: " + info.getMaxVelocity() > info.getAir());
 		//System.out.println("amount of unreachable pearls new : " + unreachablePearls.size());
 		currPearl = getClosestPoint(new Point(0, info.getScene().getHeight() /2));
-		currTrash = getClosestTrash(currPos);
+		currTrash = getNextTrash(currPos);
 		for(Point2D point1 : info.getScene().getPearl())reflexCorners.add(point1);
 		Graph graph = new Graph(reflexCorners);
 		GraphNode node = new GraphNode(currPos, reflexCorners);
@@ -139,7 +139,7 @@ public class ShoppingAI extends AI {
 	
 	@Override
 	public String getName() {
-		return "Shopping Queen";
+		return "Leonard";
 	}
 
 	@Override
@@ -153,38 +153,38 @@ public class ShoppingAI extends AI {
 	}
 	@Override
 	public void drawDebugStuff(Graphics2D gfx) {
-		if(aStarPath != null) {
-			gfx.setColor(Color.red);
-			for(Point2D pointy : aStarPath) {
-				gfx.drawOval((int)pointy.getX(), (int)pointy.getY(), 5, 5);
-			}
-		}else {
-			//System.out.println("no path right now");
-		}
-		gfx.setColor(Color.green);
-		for(Point2D point : reflexCorners) {
-			gfx.drawOval((int)point.getX(), (int)point.getY(), 5, 5);
-		}
-		gfx.setColor(Color.red);
-		GraphNode base = graphy.nodes.get(33);
-		if(aStarPath != null) {
-			for(int i = 0; i < aStarPath.size() - 1; i++) {
-				Point2D point1 = aStarPath.get(i);
-				Point2D point2 = aStarPath.get(i+1);
-				gfx.drawLine((int) point1.getX(),(int) point1.getY(), (int) point2.getX(),(int) point2.getY());
-			}
-		}
-		//gfx.drawOval((int)base.point.getX(), (int)base.point.getY(), 5, 5);
-		gfx.setColor(Color.red);
-		for(GraphNode to: base.transitions) {
-			//gfx.drawLine((int) base.point.getX(), (int) base.point.getY(),(int)  to.point.getX(),(int)  to.point.getY());
-		}
-		Point2D postion = currNode.point;
-		GraphNode test = graphy.getGraphNode(currPearl);
-		Point2D testPos = test.point;
-		for(Point2D edge : test.edges) {
-			gfx.drawLine((int)testPos.getX(), (int)testPos.getY(), (int)edge.getX(), (int)edge.getY());
-		}
+//		if(aStarPath != null) {
+//			gfx.setColor(Color.red);
+//			for(Point2D pointy : aStarPath) {
+//				gfx.drawOval((int)pointy.getX(), (int)pointy.getY(), 5, 5);
+//			}
+//		}else {
+//			//System.out.println("no path right now");
+//		}
+//		gfx.setColor(Color.green);
+//		for(Point2D point : reflexCorners) {
+//			gfx.drawOval((int)point.getX(), (int)point.getY(), 5, 5);
+//		}
+//		gfx.setColor(Color.red);
+//		GraphNode base = graphy.nodes.get(33);
+//		if(aStarPath != null) {
+//			for(int i = 0; i < aStarPath.size() - 1; i++) {
+//				Point2D point1 = aStarPath.get(i);
+//				Point2D point2 = aStarPath.get(i+1);
+//				gfx.drawLine((int) point1.getX(),(int) point1.getY(), (int) point2.getX(),(int) point2.getY());
+//			}
+//		}
+//		//gfx.drawOval((int)base.point.getX(), (int)base.point.getY(), 5, 5);
+//		gfx.setColor(Color.red);
+//		for(GraphNode to: base.transitions) {
+//			//gfx.drawLine((int) base.point.getX(), (int) base.point.getY(),(int)  to.point.getX(),(int)  to.point.getY());
+//		}
+//		Point2D postion = currNode.point;
+//		GraphNode test = graphy.getGraphNode(currPearl);
+//		Point2D testPos = test.point;
+//		for(Point2D edge : test.edges) {
+//			gfx.drawLine((int)testPos.getX(), (int)testPos.getY(), (int)edge.getX(), (int)edge.getY());
+//		}
 		
 	}
 	@Override
@@ -236,13 +236,21 @@ public class ShoppingAI extends AI {
 			}
 		
 		}
-		if(info.getAir() == info.getMaxAir() && currState == State.SeekingAir || (position.distance(currTarget) < 2 && aStarPath.size() == 1  && currState == State.movingAlongSurface)) {
+		if(info.getAir() == info.getMaxAir() && currState == State.SeekingAir || (position.distance(currTarget) < 4 && aStarPath.size() == 1  && currState == State.movingAlongSurface)) {
 			if(upgradeCount < 4) {
-				currTrash =getClosestTrash(position);
-				List<Point2D> path = graphy.constructPathFromPos(position, currTrash);
-				currState = State.SeekingTrash;
-				aStarPath = path;
-				currTarget = path.get(path.size() - 1);
+				if(info.getMoney() < 4) {
+					currTrash =getNextTrash(position);
+					List<Point2D> path = graphy.constructPathFromPos(position, currTrash);
+					currState = State.SeekingTrash;
+					aStarPath = path;
+					currTarget = path.get(path.size() - 1);
+				}else {
+					List<Point2D> path = graphy.constructPathFromPos(position, shopPos);
+					currState = State.SeekingShop;
+					aStarPath = path;
+					currTarget = path.get(path.size() - 1);
+				}
+				
 			}else {
 				seekNextPearl(position);
 				if(calcPathLenght(aStarPath) > 0.6 * info.getScene().getHeight() && currState != State.movingAlongSurface ) {
@@ -288,7 +296,7 @@ public class ShoppingAI extends AI {
 				for(Path2D path : info.getScene().getObstacles()) 
 					obstacleArea.add(new Area(path.createTransformedShape(new AffineTransform())));
 
-				System.out.println(currTrash);
+				//System.out.println(currTrash);
 				node.addOneWayTransitions(graphy.nodes, obstacleArea);
 				List<Point2D> path = graphy.constructPathAStar(node, shopPos);
 				if(calcPathLenght(path) / info.getMaxVelocity() >  info.getAir()){
@@ -304,7 +312,7 @@ public class ShoppingAI extends AI {
 			}else {
 				
 				Point2D currPos = new Point2D.Float(info.getX(), info.getY());
-				currTrash = getClosestTrash(currPos);
+				currTrash = getNextTrash(currPos);
 				GraphNode node = new GraphNode(currPos, reflexCorners);
 				Area obstacleArea = new Area();
 				for(Path2D path : info.getScene().getObstacles()) 
@@ -317,7 +325,7 @@ public class ShoppingAI extends AI {
 					Point2D nearestAir = getNearestAirPoint(position);
 					path = graphy.constructPathAStar(node, nearestAir);
 					if(calcPathLenght(path) >info.getAir() / info.getMaxVelocity()  ) {
-						System.out.println("path too long");
+						//System.out.println("path too long");
 						
 						path = graphy.constructPathAStar(node, nearestAir);
 					}
@@ -335,14 +343,14 @@ public class ShoppingAI extends AI {
 	
 		}
 		if(position.distance(shopPos) < 20 && currState == State.SeekingShop) {
-			System.out.println("found shop");
+			//System.out.println("found shop");
 			if(upgradeCount == 0) {
 				upgradeCount++;
 				return new ShoppingAction(ShoppingItem.STREAMLINED_WIG);
 			}else if(upgradeCount == 1) {
 				upgradeCount++;
 				currState =State.SeekingTrash;
-				currTrash = getClosestTrash(position);
+				currTrash = getNextTrash(position);
 				List<Point2D> path = graphy.constructPathFromPos(position, currTrash);
 				currTarget = currTrash;
 				currMoney = 0;
@@ -457,6 +465,17 @@ public class ShoppingAI extends AI {
 			if(playerPos.distance(pearl) < playerPos.distance(ClosestPearl))ClosestPearl = pearl;
 		}
 		return ClosestPearl;
+	}
+	private Point getNextTrash(Point2D playerPos) {
+		Point closestTrash = remainingTrash.get(0);
+		double lowestDist = Double.MAX_VALUE;
+		for(Point trash: remainingTrash) {
+			if(playerPos.distance(trash) + shopPos.distance(trash) < lowestDist) {
+				closestTrash = trash;
+				lowestDist = playerPos.distance(trash) + 0.5 * shopPos.distance(trash);
+			}
+		}
+		return closestTrash;
 	}
 	private Point getClosestTrash(Point2D playerPos) {
 		Point closestTrash = remainingTrash.get(0);
